@@ -3,15 +3,26 @@ set positional-arguments := true
 _default:
     @just --list --unsorted
 
-build +args:
+poetry *args:
+    docker compose exec dev poetry {{ args }}
+
+build *args:
     docker compose build {{args}}
 
-up +args:
+build-package:
+    #!/usr/bin/env bash
+    docker compose run publish-package bash -c "pip install poetry && poetry build"
+
+publish-package:
+    #!/usr/bin/env bash
+    docker compose run publish-package bash -c "pip install poetry && poetry build && poetry publish"
+
+up *args:
     docker compose up {{args}}
 
-bash:
-    docker compose exec dev bash
+bash *args:
+    docker compose exec dev bash {{args}}
 
-test:
+test *args:
     #!/bin/bash
-    docker compose run --entrypoint "poetry run pytest" dev
+    docker compose run --entrypoint "poetry run pytest {{args}}" dev

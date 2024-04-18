@@ -2,7 +2,7 @@ import os
 from secret_yaml.processor import SecretYAML
 
 TEST_PASSWORD_1 = 'Rna!nom8*'
-TEST_YAML_1_PATH = os.path.join(os.path.dirname(__file__), 'test_yaml_1.yml')
+TEST_YAML_1_PATH = os.path.join(os.path.dirname(__file__), 'test_1.yml')
 
 
 def test_processor():

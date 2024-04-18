@@ -3,7 +3,7 @@ FROM python:3.10
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Set the working directory in the container
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Install any needed packages specified in pyproject.toml
 RUN pip install poetry

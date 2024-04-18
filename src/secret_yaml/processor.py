@@ -1,10 +1,10 @@
 import os
+import io
 from copy import deepcopy
 
 import ruamel.yaml as ruml
 from ansible.constants import DEFAULT_VAULT_ID_MATCH
 from ansible.parsing.vault import VaultLib, VaultSecret
-
 
 def encrypt_value(value, password):
     try:
@@ -98,7 +98,7 @@ class SecretYAML(ruml.YAML):
                     break
         elif isinstance(node, list):
             for item in node:
-                found = cls.contains_tag_of_type(item, depth=depth + 1)
+                found = cls.contains_tag_of_type(item, of_type, depth=depth + 1)
                 if found:
                     break
         else:
@@ -111,7 +111,10 @@ class SecretYAML(ruml.YAML):
             node = self.data
         node = self.encrypt_walk(node)
         self.data = node
-        return deepcopy(node)
+        buf = io.BytesIO()
+        breakpoint()
+        self.dump(self.data, buf)
+        return buf.getvalue()
 
     def encrypt_walk(self, node):
         if isinstance(node, SecretString):
@@ -130,7 +133,9 @@ class SecretYAML(ruml.YAML):
             node = self.data
         node = self.decrypt_walk(node)
         self.data = node
-        return deepcopy(node)
+        buf = io.BytesIO()
+        self.dump(self.data, buf)
+        return buf.getvalue()
 
     def decrypt_walk(self, node):
         if isinstance(node, EncryptedString):
@@ -149,7 +154,8 @@ class SecretYAML(ruml.YAML):
             raise FileNotFoundError(filepath)
 
         with open(filepath, 'r') as stream:
-            return self.load_yaml(stream)
+            data_str = stream.read()
+            return self.load(data_str)
 
     def load_yaml(self, stream):
         return self.load(stream)
