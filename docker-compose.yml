@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  dev:
+    build: .
+    volumes:
+      - .:/usr/src/app
+    stdin_open: true
+    tty: true
+    command: bash
+    entrypoint: sh -c
