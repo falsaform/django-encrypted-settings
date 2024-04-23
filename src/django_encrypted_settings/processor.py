@@ -198,10 +198,10 @@ class SecretYAML(ruml.YAML):
         self.version_check()
 
     def version_check(self):
-        version = self.data.get('version', False)
+        version = self.data.get("version", False)
         if not version:
             raise VersionTagNotSpecified()
-        if str(version) != '1.0':
+        if str(version) != "1.0":
             raise UnsupportedVersionSpecified()
 
     def encrypt(self, node=None):

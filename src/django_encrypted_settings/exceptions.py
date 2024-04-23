@@ -24,7 +24,7 @@ class NoEnvironmentsDefinedException(Exception):
 
 class EnvironmentHasNoEncryptedSecretTagsException(Exception):
     def __init__(
-            self, msg="Environment does not have any !encrypted tags, cannot decrypt"
+        self, msg="Environment does not have any !encrypted tags, cannot decrypt"
     ):
         super().__init__(msg)
 
@@ -45,7 +45,9 @@ class EnvironmentIsAlreadyDecrypted(Exception):
 
 
 class VersionTagNotSpecified(Exception):
-    def __init__(self, msg="No version tag has been specified, please add version: 1.0"):
+    def __init__(
+        self, msg="No version tag has been specified, please add version: 1.0"
+    ):
         super().__init__(msg)
 
 

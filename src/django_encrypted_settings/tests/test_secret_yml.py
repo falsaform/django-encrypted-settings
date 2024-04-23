@@ -18,6 +18,7 @@ TEST_YAML_5_PATH = path_from_fixtures("fixtures/test_5.yml")
 TEST_YAML_6_PATH = path_from_fixtures("fixtures/test_6.yml")
 TEST_YAML_7_PATH = path_from_fixtures("fixtures/test_7.yml")
 
+
 # Helper functions
 def encrypt_env_by_name(env_name, config, password):
     # Confirm that env is initially decrypted
@@ -63,6 +64,7 @@ def test_encrypt_and_encrypt_again_dev_env():
     with pytest.raises(EnvironmentIsAlreadyEncrypted):
         config.encrypt_env(env_name, TEST_PASSWORD_1)
 
+
 def test_decrypted_an_already_decrypted_dev_env():
     """
     Test if an environment called dev can be unencrypted when it is already unencrypted.,
@@ -72,6 +74,7 @@ def test_decrypted_an_already_decrypted_dev_env():
     config = SecretYAML(filepath=TEST_YAML_1_PATH)
     with pytest.raises(EnvironmentIsAlreadyDecrypted):
         config.decrypt_env(env_name, TEST_PASSWORD_1)
+
 
 def test_non_existant_uat_env_encrypt():
     """
@@ -85,6 +88,7 @@ def test_non_existant_uat_env_encrypt():
 
     assert str(exc_info.value) == "Environment of uat not found"
 
+
 def test_non_existant_uat_env_decrypt():
     """
     Test if an environment called uat can be unencrypted when it does not exist,
@@ -96,6 +100,7 @@ def test_non_existant_uat_env_decrypt():
         config.decrypt_env(env_name, TEST_PASSWORD_1)
 
     assert str(exc_info.value) == "Environment of uat not found"
+
 
 def test_encrypt_stage():
     """
@@ -169,12 +174,10 @@ def test_yml_with_no_version_tag():
         SecretYAML(filepath=TEST_YAML_6_PATH)
 
 
-
 def test_yml_with_unsupported_version_tag():
     """
     Test if a yml file has an unsupported version defined will raise an
     Unsupported Version Tag Defined Exception
-   """
+    """
     with pytest.raises(UnsupportedVersionSpecified):
         SecretYAML(filepath=TEST_YAML_7_PATH)
-
