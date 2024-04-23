@@ -26,3 +26,6 @@ bash *args:
 test *args:
     #!/bin/bash
     docker compose run --entrypoint "poetry run pytest {{args}}" dev
+
+black *args:
+    just poetry run black .
