@@ -1,0 +1,20 @@
+version: 1.0
+!default common:
+  postgres_db_name: wagtail_pg_db
+  postgres_db_user: wagtail_pg_db
+  google_secret_key: secret
+  postgres_port: 3456
+  django_secret_key: "DEFAULT"
+
+!env no_secrets:
+  allowed_hosts:
+    - localhost
+    - sitename.dev.octave.nz
+  postgres_password: plain_text_password
+
+!env with_secrets:
+  allowed_hosts:
+    - test.sitename.nz
+    - sitename.stage.octave.nz
+    - sitename-origin.stage.octave.nz
+  postgres_password: !secret another_plain_text_password
