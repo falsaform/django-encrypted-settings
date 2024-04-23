@@ -214,9 +214,7 @@ class SecretYAML(ruml.YAML):
     def encrypt_env(self, env_name, password):
         node = self.get_env_by_name(env_name)
         if self.is_encrypted(node):
-            raise EnvironmentIsAlreadyEncrypted(
-                f"Environment {env_name} is already encrypted"
-            )
+            raise EnvironmentIsAlreadyEncrypted()
 
         if self.has_no_secret_tags(node):
             raise EnvironmentHasNoSecretTagsException()
@@ -227,12 +225,7 @@ class SecretYAML(ruml.YAML):
     def decrypt_env(self, env_name, password):
         node = self.get_env_by_name(env_name)
         if self.is_decrypted(node):
-            raise EnvironmentIsAlreadyDecrypted(
-                f"Environment {env_name} is already decrypted"
-            )
-        #
-        # if not self.has_encrypted_secrets(node):
-        #     raise EnvironmentHasNoEncryptedSecretTagsException()
+            raise EnvironmentIsAlreadyDecrypted()
 
         self.decrypt_walk(node, password)
         logger.info(f"Encrypted environment {env_name}")

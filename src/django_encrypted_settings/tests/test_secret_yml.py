@@ -51,6 +51,51 @@ def test_encrypt_and_decrypt_dev():
     decrypt_env_by_name(env_name, config, TEST_PASSWORD_1)
 
 
+def test_encrypt_and_encrypt_again_dev_env():
+    """
+    Test if an environment called dev can be encrypted and encrypted again,
+    raising an Already Encrypted exception.
+    """
+    env_name = "dev"
+    config = SecretYAML(filepath=TEST_YAML_1_PATH)
+    config.encrypt_env(env_name, TEST_PASSWORD_1)
+    with pytest.raises(EnvironmentIsAlreadyEncrypted):
+        config.encrypt_env(env_name, TEST_PASSWORD_1)
+
+def test_decrypted_an_already_decrypted_dev_env():
+    """
+    Test if an environment called dev can be unencrypted when it is already unencrypted.,
+    raising an Already Unencrypted exception.
+    """
+    env_name = "dev"
+    config = SecretYAML(filepath=TEST_YAML_1_PATH)
+    with pytest.raises(EnvironmentIsAlreadyDecrypted):
+        config.decrypt_env(env_name, TEST_PASSWORD_1)
+
+def test_non_existant_uat_env_encrypt():
+    """
+    Test if an environment called uat can be unencrypted when it does not exist,
+    raising an Environment not found
+    """
+    env_name = "uat"
+    config = SecretYAML(filepath=TEST_YAML_1_PATH)
+    with pytest.raises(EnvironmentNotFound) as exc_info:
+        config.encrypt_env(env_name, TEST_PASSWORD_1)
+
+    assert str(exc_info.value) == "Environment of uat not found"
+
+def test_non_existant_uat_env_decrypt():
+    """
+    Test if an environment called uat can be unencrypted when it does not exist,
+    raising an Environment not found
+    """
+    env_name = "uat"
+    config = SecretYAML(filepath=TEST_YAML_1_PATH)
+    with pytest.raises(EnvironmentNotFound) as exc_info:
+        config.decrypt_env(env_name, TEST_PASSWORD_1)
+
+    assert str(exc_info.value) == "Environment of uat not found"
+
 def test_encrypt_stage():
     """
     Test if an environment called stage can be encrypted and decrypted.
