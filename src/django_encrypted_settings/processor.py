@@ -204,15 +204,14 @@ class SecretYAML(ruml.YAML):
         if str(version) != "1.0":
             raise UnsupportedVersionSpecified()
 
-    def encrypt(self, node=None):
-        if node is None:
-            node = self.data
-        node = self.encrypt_walk(node)
-        self.data = node
-        buf = io.BytesIO()
-        breakpoint()
-        self.dump(self.data, buf)
-        return buf.getvalue()
+    # def encrypt(self, node=None):
+    #     if node is None:
+    #         node = self.data
+    #     node = self.encrypt_walk(node)
+    #     self.data = node
+    #     buf = io.BytesIO()
+    #     self.dump(self.data, buf)
+    #     return buf.getvalue()
 
     def has_no_secret_tags(self, node):
         return not self.contains_tag_of_type(node, SecretString)
@@ -238,6 +237,22 @@ class SecretYAML(ruml.YAML):
 
         self.decrypt_walk(node, password)
         logger.info(f"Encrypted environment {env_name}")
+
+    def encrypt_default(self, password):
+        node = self.get_default()
+        self.encrypt_walk(node, password)
+
+    def decrypt_default(self, password):
+        node = self.get_default()
+        self.decrypt_walk(node, password)
+
+    def is_default_encrypted(self):
+        node = self.get_default()
+        return self.is_encrypted(node)
+
+    def is_default_decrypted(self):
+        node = self.get_default()
+        return self.is_decrypted(node)
 
     def encrypt_walk(self, node, password):
         if isinstance(node, SecretString):
@@ -342,5 +357,3 @@ class SecretYAML(ruml.YAML):
             default_dict.update(env_node_dict)
             return default_dict
         return env_node_dict
-
-

@@ -18,6 +18,7 @@ TEST_YAML_5_PATH = path_from_fixtures("fixtures/test_5.yml")
 TEST_YAML_6_PATH = path_from_fixtures("fixtures/test_6.yml")
 TEST_YAML_7_PATH = path_from_fixtures("fixtures/test_7.yml")
 TEST_YAML_8_PATH = path_from_fixtures("fixtures/test_8.yml")
+TEST_YAML_9_PATH = path_from_fixtures("fixtures/test_9.yml")
 
 
 # Helper functions
@@ -192,7 +193,11 @@ def test_yml_load_dev_env_with_common_config():
     env_name = "dev"
     config = SecretYAML(filepath=TEST_YAML_8_PATH)
     config_dict = config.get_env_as_dict(env_name)
-    expected_dict = {'default_value_1': 'dev value1', 'default_value_2': 'value2', 'default_value_3': 'value3'}
+    expected_dict = {
+        "default_value_1": "dev value1",
+        "default_value_2": "value2",
+        "default_value_3": "value3",
+    }
     assert config_dict == expected_dict
 
 
@@ -203,5 +208,19 @@ def test_yml_load_dev_env_without_common_config():
     env_name = "dev"
     config = SecretYAML(filepath=TEST_YAML_8_PATH)
     config_dict = config.get_env_as_dict(env_name, use_default=False)
-    expected_dict = {'default_value_1': 'dev value1'}
+    expected_dict = {"default_value_1": "dev value1"}
     assert config_dict == expected_dict
+
+
+def test_yml_encrypt_common_tag():
+    config = SecretYAML(filepath=TEST_YAML_9_PATH)
+    config.encrypt_default(TEST_PASSWORD_1)
+    assert config.is_default_encrypted()
+
+
+def test_yml_encrypt_and_decrypt_common_tag():
+    config = SecretYAML(filepath=TEST_YAML_9_PATH)
+    config.encrypt_default(TEST_PASSWORD_1)
+    assert config.is_default_encrypted()
+    config.decrypt_default(TEST_PASSWORD_1)
+    assert config.is_default_decrypted()

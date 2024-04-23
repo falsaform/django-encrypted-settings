@@ -1,0 +1,12 @@
+# Test encrypting default tag
+version: 1.0
+!default common:
+  default_value_1: !secret value1
+  default_value_2: !secret value2
+  default_value_3: !secret value3
+
+!env dev:
+  default_value_1: !secret dev value1
+
+!env stage:
+  default_value_1: !secret stage value1
