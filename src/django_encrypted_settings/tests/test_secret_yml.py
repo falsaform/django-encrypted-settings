@@ -15,7 +15,8 @@ TEST_YAML_2_PATH = path_from_fixtures("fixtures/test_2.yml")
 TEST_YAML_3_PATH = path_from_fixtures("fixtures/test_3.yml")
 TEST_YAML_4_PATH = path_from_fixtures("fixtures/test_4.yml")
 TEST_YAML_5_PATH = path_from_fixtures("fixtures/test_5.yml")
-
+TEST_YAML_6_PATH = path_from_fixtures("fixtures/test_6.yml")
+TEST_YAML_7_PATH = path_from_fixtures("fixtures/test_7.yml")
 
 # Helper functions
 def encrypt_env_by_name(env_name, config, password):
@@ -155,7 +156,25 @@ def test_yml_with_multiple_default_tags():
 
 
 def test_yml_with_no_env_tags():
-    """Test if a yml file has no envs defined will raise an
+    """Test if a yml file has no envs defined will raise a
     No Environments Defined Exception"""
-    with pytest.raises(NoEnvironmentsDefinedException) as excinfo:
+    with pytest.raises(NoEnvironmentsDefinedException):
         SecretYAML(filepath=TEST_YAML_5_PATH)
+
+
+def test_yml_with_no_version_tag():
+    """Test if a yml file has no version defined will raise an
+    No Version Tag Defined Exception"""
+    with pytest.raises(VersionTagNotSpecified):
+        SecretYAML(filepath=TEST_YAML_6_PATH)
+
+
+
+def test_yml_with_unsupported_version_tag():
+    """
+    Test if a yml file has an unsupported version defined will raise an
+    Unsupported Version Tag Defined Exception
+   """
+    with pytest.raises(UnsupportedVersionSpecified):
+        SecretYAML(filepath=TEST_YAML_7_PATH)
+

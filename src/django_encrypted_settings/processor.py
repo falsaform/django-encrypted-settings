@@ -18,7 +18,8 @@ from .exceptions import (
     EnvironmentIsAlreadyEncrypted,
     EnvironmentIsAlreadyDecrypted,
     EnvironmentHasNoSecretTagsException,
-    EnvironmentHasNoEncryptedSecretTagsException,
+    VersionTagNotSpecified,
+    UnsupportedVersionSpecified,
 )
 
 
@@ -194,6 +195,14 @@ class SecretYAML(ruml.YAML):
         self.get_default()
         if len(self.envs) == 0:
             raise NoEnvironmentsDefinedException()
+        self.version_check()
+
+    def version_check(self):
+        version = self.data.get('version', False)
+        if not version:
+            raise VersionTagNotSpecified()
+        if str(version) != '1.0':
+            raise UnsupportedVersionSpecified()
 
     def encrypt(self, node=None):
         if node is None:

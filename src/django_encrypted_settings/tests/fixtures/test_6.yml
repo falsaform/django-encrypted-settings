@@ -1,0 +1,6 @@
+# No version tag specified
+!default default_1:
+  not_much: default value
+
+!env dev:
+  not_much: dev version
