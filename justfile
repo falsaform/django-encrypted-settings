@@ -24,7 +24,8 @@ bash *args:
     docker compose exec dev bash {{args}}
 
 test *args:
-    just poetry run pytest {{args}} dev
+    #!/bin/bash
+    docker compose run --entrypoint "poetry run pytest {{args}}" dev
 
 black *args:
     just poetry run black .

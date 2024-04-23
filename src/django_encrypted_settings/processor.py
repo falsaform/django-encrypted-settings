@@ -294,7 +294,8 @@ class SecretYAML(ruml.YAML):
         if base_count != 1:
             raise TooManyDefaultMapTagsDefinedException()
 
-        return list(base.keys())[0]
+        default_env_key = list(base.keys())[0]
+        return self.data[default_env_key]
 
     @property
     def envs(self):
@@ -330,3 +331,16 @@ class SecretYAML(ruml.YAML):
             logger.warning(CONTAINS_ENCRYPTED_TAGS)
 
         return self.contains_tag_of_type(node, SecretString)
+
+    def get_env_as_dict(self, env, use_default=True):
+        default_node = self.get_default()
+        env_node = self.get_env_by_name(env)
+
+        env_node_dict = dict(env_node)
+        if use_default:
+            default_dict = dict(default_node)
+            default_dict.update(env_node_dict)
+            return default_dict
+        return env_node_dict
+
+

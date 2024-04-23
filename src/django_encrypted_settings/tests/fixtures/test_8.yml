@@ -1,0 +1,9 @@
+# Test using dict default config
+version: 1.0
+!default common:
+  default_value_1: value1
+  default_value_2: value2
+  default_value_3: value3
+
+!env dev:
+  default_value_1: dev value1

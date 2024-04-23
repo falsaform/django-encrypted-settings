@@ -17,6 +17,7 @@ TEST_YAML_4_PATH = path_from_fixtures("fixtures/test_4.yml")
 TEST_YAML_5_PATH = path_from_fixtures("fixtures/test_5.yml")
 TEST_YAML_6_PATH = path_from_fixtures("fixtures/test_6.yml")
 TEST_YAML_7_PATH = path_from_fixtures("fixtures/test_7.yml")
+TEST_YAML_8_PATH = path_from_fixtures("fixtures/test_8.yml")
 
 
 # Helper functions
@@ -181,3 +182,26 @@ def test_yml_with_unsupported_version_tag():
     """
     with pytest.raises(UnsupportedVersionSpecified):
         SecretYAML(filepath=TEST_YAML_7_PATH)
+
+
+def test_yml_load_dev_env_with_common_config():
+    """
+    Test if a yml file can be loaded using the dev env
+    and return a dict with the default config values included
+    """
+    env_name = "dev"
+    config = SecretYAML(filepath=TEST_YAML_8_PATH)
+    config_dict = config.get_env_as_dict(env_name)
+    expected_dict = {'default_value_1': 'dev value1', 'default_value_2': 'value2', 'default_value_3': 'value3'}
+    assert config_dict == expected_dict
+
+
+def test_yml_load_dev_env_without_common_config():
+    """
+    Test if a yml file can be used load the dev env and return a dict without the default config values
+    """
+    env_name = "dev"
+    config = SecretYAML(filepath=TEST_YAML_8_PATH)
+    config_dict = config.get_env_as_dict(env_name, use_default=False)
+    expected_dict = {'default_value_1': 'dev value1'}
+    assert config_dict == expected_dict
