@@ -2,17 +2,23 @@ class InvalidSettingsProvided(Exception):
     pass
 
 
-class NoBaseSecretMapDefinedException(Exception):
-    pass
+class NoDefaultMapTagDefinedException(Exception):
+    def __init__(self, msg="No default section is defined"):
+        super().__init__(msg)
 
 
-class ToManyBaseSecretMapsDefinedException(Exception):
-    def __init__(self, msg="Too many base secrets defined"):
+class TooManyDefaultMapTagsDefinedException(Exception):
+    def __init__(self, msg="Too many default sections defined"):
         super().__init__(msg)
 
 
 class EnvironmentNotFound(Exception):
     def __init__(self, msg="Environment not found"):
+        super().__init__(msg)
+
+
+class NoEnvironmentsDefinedException(Exception):
+    def __init__(self, msg="No Environments defined, at least 1 !env must be defined"):
         super().__init__(msg)
 
 
@@ -25,4 +31,14 @@ class EnvironmentHasNoEncryptedSecretTagsException(Exception):
 
 class EnvironmentHasNoSecretTagsException(Exception):
     def __init__(self, msg="Environment does not have any !secrets, cannot encrypt"):
+        super().__init__(msg)
+
+
+class EnvironmentIsAlreadyEncrypted(Exception):
+    def __init__(self, msg="Environment is already encrypted"):
+        super().__init__(msg)
+
+
+class EnvironmentIsAlreadyDecrypted(Exception):
+    def __init__(self, msg="Environment is already decrypted"):
         super().__init__(msg)

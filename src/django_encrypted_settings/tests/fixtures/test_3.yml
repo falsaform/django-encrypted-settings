@@ -1,0 +1,4 @@
+# No default tag
+version: 1.0
+!env file_with_no_default:
+  postgres_password: plain_text_password

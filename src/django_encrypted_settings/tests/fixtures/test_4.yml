@@ -1,0 +1,7 @@
+# Multiple default tags
+version: 1.0
+!default default_1:
+  not_much: 1
+
+!default default_2:
+  not_much: 2

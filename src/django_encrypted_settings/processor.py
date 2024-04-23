@@ -3,7 +3,7 @@ import io
 import logging
 
 import ruamel.yaml as ruml
-from ruamel.yaml.nodes import MappingNode, ScalarNode, SequenceNode
+from ruamel.yaml.nodes import MappingNode
 
 from ansible.constants import DEFAULT_VAULT_ID_MATCH
 from ansible.parsing.vault import VaultLib, VaultSecret
@@ -11,9 +11,12 @@ from ansible.parsing.vault import VaultLib, VaultSecret
 from .constants import CONTAINS_ENCRYPTED_TAGS, CONTAINS_UNENCRYPTED_TAGS
 
 from .exceptions import (
-    NoBaseSecretMapDefinedException,
-    ToManyBaseSecretMapsDefinedException,
+    NoDefaultMapTagDefinedException,
+    TooManyDefaultMapTagsDefinedException,
     EnvironmentNotFound,
+    NoEnvironmentsDefinedException,
+    EnvironmentIsAlreadyEncrypted,
+    EnvironmentIsAlreadyDecrypted,
     EnvironmentHasNoSecretTagsException,
     EnvironmentHasNoEncryptedSecretTagsException,
 )
@@ -132,13 +135,12 @@ class EncryptedString:
 
 
 class SecretYAML(ruml.YAML):
-    def __init__(self, *args, filepath=None, password=None, **kwargs):
+    def __init__(self, *args, filepath=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.indent(mapping=4, sequence=4, offset=2)
         self.default_flow_style = False
         self.width = 120
         self.filepath = filepath
-        self.password = password
         self.register_class(DefaultSecretConfigMap)
         self.register_class(EnvSecretConfigMap)
         self.register_class(EncryptedString)
@@ -148,6 +150,9 @@ class SecretYAML(ruml.YAML):
 
         if self.filepath:
             self.data = self.load_file(self.filepath)
+
+        if self.data:
+            self.validate()
 
     @classmethod
     def get_tags_of_type(cls, node, of_type, depth=0):
@@ -185,6 +190,11 @@ class SecretYAML(ruml.YAML):
                 return True
         return found
 
+    def validate(self):
+        self.get_default()
+        if len(self.envs) == 0:
+            raise NoEnvironmentsDefinedException()
+
     def encrypt(self, node=None):
         if node is None:
             node = self.data
@@ -195,20 +205,20 @@ class SecretYAML(ruml.YAML):
         self.dump(self.data, buf)
         return buf.getvalue()
 
-    def has_secrets(self, node):
-        return self.contains_tag_of_type(node, SecretString)
+    def has_no_secret_tags(self, node):
+        return not self.contains_tag_of_type(node, SecretString)
 
-    def has_encrypted_secrets(self, node):
-        return self.contains_tag_of_type(node, SecretString)
+    def has_not_encrypted_tags(self, node):
+        return not self.contains_tag_of_type(node, EncryptedString)
 
     def encrypt_env(self, env_name, password):
         node = self.get_env_by_name(env_name)
         if self.is_encrypted(node):
             raise EnvironmentIsAlreadyEncrypted(
-                f"Environment {name} is already encrypted"
+                f"Environment {env_name} is already encrypted"
             )
 
-        if not self.has_secrets(node):
+        if self.has_no_secret_tags(node):
             raise EnvironmentHasNoSecretTagsException()
 
         self.encrypt_walk(node, password)
@@ -217,12 +227,12 @@ class SecretYAML(ruml.YAML):
     def decrypt_env(self, env_name, password):
         node = self.get_env_by_name(env_name)
         if self.is_decrypted(node):
-            raise EnvironmentIsAlreadyEncrypted(
-                f"Environment {name} is already decrypted"
+            raise EnvironmentIsAlreadyDecrypted(
+                f"Environment {env_name} is already decrypted"
             )
-
-        if not self.has_encrypted_secrets(node):
-            raise EnvironmentHasNoSecretTagsException()
+        #
+        # if not self.has_encrypted_secrets(node):
+        #     raise EnvironmentHasNoEncryptedSecretTagsException()
 
         self.decrypt_walk(node, password)
         logger.info(f"Encrypted environment {env_name}")
@@ -271,20 +281,16 @@ class SecretYAML(ruml.YAML):
     def load_yaml(self, stream):
         return self.load(stream)
 
-    def get_base(self, node=None):
+    def get_default(self, node=None):
         if node is None:
             node = self.data
-        base = self.get_tags_of_type(node, BaseSecretMap)
+        base = self.get_tags_of_type(node, DefaultSecretConfigMap)
         base_count = len(base.keys())
         if base_count == 0:
-            raise NoBaseSecretMapDefinedException(
-                "No BaseSecretMap found, you must define one !base tag"
-            )
+            raise NoDefaultMapTagDefinedException()
 
         if base_count != 1:
-            raise ToManyBaseSecretMapsDefinedException(
-                "To many BaseSecretMaps found, you must define only one !base tag"
-            )
+            raise TooManyDefaultMapTagsDefinedException()
 
         return list(base.keys())[0]
 
