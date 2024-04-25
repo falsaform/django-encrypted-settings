@@ -7,6 +7,7 @@ from ruamel.yaml.nodes import MappingNode
 
 from ansible.constants import DEFAULT_VAULT_ID_MATCH
 from ansible.parsing.vault import VaultLib, VaultSecret
+from ansible.parsing.vault import AnsibleVaultError
 
 from .constants import CONTAINS_ENCRYPTED_TAGS, CONTAINS_UNENCRYPTED_TAGS
 
@@ -22,11 +23,10 @@ from .exceptions import (
     UnsupportedVersionSpecified,
 )
 
-
 logger = logging.getLogger("django_encrypted_settings")
 
 
-def encrypt_value(value, password):
+def encrypt_value(value, password, node):
     try:
         vault = VaultLib([(DEFAULT_VAULT_ID_MATCH, VaultSecret(password.encode()))])
         encrypted_value = vault.encrypt(value.encode())
@@ -35,10 +35,10 @@ def encrypt_value(value, password):
         )  # replace new lines with pipe
     except Exception as e:
         print(f"Error during encryption: {e}")
-        return None
+        raise AnsibleVaultError(f"Could not encrypt node: {node}")
 
 
-def decrypt_value(value, password):
+def decrypt_value(value, password, node):
     try:
         vault = VaultLib([(DEFAULT_VAULT_ID_MATCH, VaultSecret(password.encode()))])
         decrypted_value = vault.decrypt(
@@ -47,22 +47,24 @@ def decrypt_value(value, password):
         return decrypted_value.decode()
     except Exception as e:
         print(f"Error during decryption: {e}")
-        return None
+        raise AnsibleVaultError(f"Could not encrypt node: {node}")
 
 
-class DefaultSecretConfigMap(MappingNode):
+class DefaultSecretConfigMap:
     yaml_tag = "!default"
 
-    def __init__(self, value):
+    def __init__(self, tag, value):
+        self.tag = tag
         self.value = value
 
     @classmethod
     def to_yaml(cls, representer, node):
-        return representer.represent_mapping(cls.yaml_tag, node)
+        # breakpoint()
+        return representer.represent_scalar(cls.yaml_tag, node.value)
 
     @classmethod
     def from_yaml(cls, constructor, node):
-        return cls(node.value)
+        return cls(node.tag, node.value)
 
     def __str__(self):
         return str(self.value)
@@ -71,19 +73,22 @@ class DefaultSecretConfigMap(MappingNode):
         return self.__str__()
 
 
-class EnvSecretConfigMap(MappingNode):
+class EnvSecretConfigMap:
     yaml_tag = "!env"
+    alias_key = None
 
-    def __init__(self, value):
+    def __init__(self, tag, value):
+        self.tag = tag
         self.value = value
 
     @classmethod
     def to_yaml(cls, representer, node):
-        return representer.represent_mapping(cls.yaml_tag, node)
+        # breakpoint()
+        return representer.represent_scalar(cls.yaml_tag, node.value)
 
     @classmethod
     def from_yaml(cls, constructor, node):
-        return cls(node.value)
+        return cls(node.tag, node.value)
 
     def __str__(self):
         return str(self.value)
@@ -94,20 +99,21 @@ class EnvSecretConfigMap(MappingNode):
 
 class SecretString:
     yaml_tag = "!secret"
+    alias_key = None
 
     def __init__(self, value):
         self.value = value
 
     @classmethod
     def to_yaml(cls, representer, node):
-        return representer.represent_scalar(cls.yaml_tag, node)
+        return representer.represent_scalar(cls.yaml_tag, node.value)
 
     @classmethod
     def from_yaml(cls, constructor, node):
         return cls(node.value)
 
     def __str__(self):
-        return str(f"[{self.yaml_tag}] {self.value}")
+        return str(f"{self.yaml_tag} {self.value}")
 
     def __repr__(self):
         return self.__str__()
@@ -121,7 +127,7 @@ class EncryptedString:
 
     @classmethod
     def to_yaml(cls, representer, node):
-        return representer.represent_scalar(cls.yaml_tag, node)
+        return representer.represent_scalar(cls.yaml_tag, node.value)
 
     @classmethod
     def from_yaml(cls, constructor, node):
@@ -129,18 +135,32 @@ class EncryptedString:
         return cls(node.value)
 
     def __str__(self):
-        return str(f"[{self.yaml_tag}] {self.value}")
+        return str(f"{self.yaml_tag} {self.value}")
 
     def __repr__(self):
         return self.__str__()
 
 
+def null_op(*args, **kw):
+    return True
+
+
+# prevent anchors from being preserved even if there are no aliases for them
+ruml.comments.CommentedBase.yaml_set_anchor = null_op
+ruml.scalarstring.ScalarString.yaml_set_anchor = null_op
+ruml.scalarint.ScalarInt.yaml_set_anchor = null_op
+ruml.scalarfloat.ScalarFloat.yaml_set_anchor = null_op
+ruml.scalarbool.ScalarBoolean.yaml_set_anchor = null_op
+
+
 class SecretYAML(ruml.YAML):
     def __init__(self, *args, filepath=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.indent(mapping=4, sequence=4, offset=2)
+        # self.indent(mapping=4, sequence=4, offset=2)
         self.default_flow_style = False
-        self.width = 120
+        self.preserve_quotes = True
+        # self.representer.ignore_aliases = null_op
+        self.width = 100000
         self.filepath = filepath
         self.register_class(DefaultSecretConfigMap)
         self.register_class(EnvSecretConfigMap)
@@ -148,6 +168,8 @@ class SecretYAML(ruml.YAML):
         self.register_class(SecretString)
         self.data = None
         self.status = None
+        self.preserve_quotes = True
+        self.anchor = None  # This tells ruamel.yaml to not use anchors
 
         if self.filepath:
             self.data = self.load_file(self.filepath)
@@ -256,7 +278,8 @@ class SecretYAML(ruml.YAML):
 
     def encrypt_walk(self, node, password):
         if isinstance(node, SecretString):
-            encrypted_string = encrypt_value(node.value, password)
+            encrypted_string = encrypt_value(node.value, password, node)
+            del node
             node = EncryptedString(encrypted_string)
         elif isinstance(node, dict):
             for k, v in node.items():
@@ -277,7 +300,8 @@ class SecretYAML(ruml.YAML):
 
     def decrypt_walk(self, node, password):
         if isinstance(node, EncryptedString):
-            decrypted_string = decrypt_value(node.value, password)
+            decrypted_string = decrypt_value(node.value, password, node)
+            del node
             node = SecretString(decrypted_string)
         elif isinstance(node, dict):
             for k, v in node.items():
@@ -293,7 +317,19 @@ class SecretYAML(ruml.YAML):
 
         with open(filepath, "r") as stream:
             data_str = stream.read()
+            self.representer.ignore_aliases = lambda *data: True
             return self.load(data_str)
+
+    def save_file(self, filepath=None):
+        if filepath is None:
+            filepath = self.filepath
+
+        buf = io.StringIO()
+        self.dump(self.data, buf)
+        data = buf.getvalue()
+
+        with open(filepath, "w") as stream:
+            stream.write(data)
 
     def load_yaml(self, stream):
         return self.load(stream)
@@ -347,6 +383,11 @@ class SecretYAML(ruml.YAML):
 
         return self.contains_tag_of_type(node, SecretString)
 
+    def to_dict(self, node=None):
+        if node is None:
+            node = self.data
+        return dict(self.data)
+
     def get_env_as_dict(self, env, use_default=True):
         default_node = self.get_default()
         env_node = self.get_env_by_name(env)
@@ -357,3 +398,6 @@ class SecretYAML(ruml.YAML):
             default_dict.update(env_node_dict)
             return default_dict
         return env_node_dict
+
+    def __repr__(self):
+        return str(self.data)

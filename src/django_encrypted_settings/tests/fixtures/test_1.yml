@@ -1,3 +1,4 @@
+#UNENCRYTPED
 version: 1.0
 !default common:
   postgres_db_name: wagtail_pg_db

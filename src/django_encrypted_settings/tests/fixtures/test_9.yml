@@ -1,4 +1,4 @@
-# Test encrypting default tag
+# Test using dict default config
 version: 1.0
 !default common:
   default_value_1: !secret value1
@@ -7,6 +7,3 @@ version: 1.0
 
 !env dev:
   default_value_1: !secret dev value1
-
-!env stage:
-  default_value_1: !secret stage value1
