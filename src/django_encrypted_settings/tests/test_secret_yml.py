@@ -5,15 +5,16 @@ import tempfile
 from django_encrypted_settings.processor import SecretYAML
 from django_encrypted_settings.exceptions import *
 from ansible.parsing.vault import AnsibleVaultError
-
 from ruamel.yaml.scanner import ScannerError
+from django.conf import settings, LazySettings
+
 
 def path_from_fixtures(file_name):
     return os.path.join(os.path.dirname(__file__), file_name)
 
 
 TEST_PASSWORD_1 = "Rna!nom8*"
-TEST_PASSWORD_SHORT = 'four'
+TEST_PASSWORD_SHORT = "four"
 TEST_YAML_1_PATH = path_from_fixtures("fixtures/test_1.yml")
 TEST_YAML_2_PATH = path_from_fixtures("fixtures/test_2.yml")
 TEST_YAML_3_PATH = path_from_fixtures("fixtures/test_3.yml")
@@ -25,7 +26,10 @@ TEST_YAML_8_PATH = path_from_fixtures("fixtures/test_8.yml")
 TEST_YAML_9_PATH = path_from_fixtures("fixtures/test_9.yml")
 TEST_YAML_10_PATH = path_from_fixtures("fixtures/test_10.yml")
 ENCRYPTED_TEST_YAML_1_PATH = path_from_fixtures("fixtures/encrypted_test_1.yml")
+ENCRYPTED_TEST_YAML_2_PATH = path_from_fixtures("fixtures/encrypted_test_2.yml")
 INVALID_YML_TEST_1 = path_from_fixtures("fixtures/invalid_yml_test_1.yml")
+INVALID_YML_TEST_2 = path_from_fixtures("fixtures/invalid_yml_test_2.yml")
+
 
 # Helper functions
 def encrypt_env_by_name(env_name, config, password):
@@ -233,7 +237,9 @@ def test_yml_encrypt_and_decrypt_common_tag():
 
 
 def test_yml_encrypt_and_save_to_disk():
-    tmp_location = tempfile.NamedTemporaryFile(prefix="temp-encrypted", suffix=".yml").name
+    tmp_location = tempfile.NamedTemporaryFile(
+        prefix="temp-encrypted", suffix=".yml"
+    ).name
 
     config = SecretYAML(filepath=TEST_YAML_9_PATH)
     assert config.is_default_decrypted()
@@ -242,7 +248,7 @@ def test_yml_encrypt_and_save_to_disk():
     config.save_file(tmp_location)
 
     assert os.path.isfile(tmp_location)
-    output = open(tmp_location, 'r').read()
+    output = open(tmp_location, "r").read()
 
     config_encrypted = SecretYAML(filepath=tmp_location)
     assert config_encrypted.is_default_encrypted()
@@ -266,11 +272,11 @@ def test_yml_decrypt_with_wrong_password():
     assert config_encrypted.is_default_encrypted()
 
 
-
 def test_yml_encrypt_with_short_password():
     config = SecretYAML(filepath=TEST_YAML_9_PATH)
     config.encrypt_default(TEST_PASSWORD_SHORT)
     assert config.is_default_encrypted()
+
 
 def test_yml_encrypt_and_decrypt_dev_and_default_with_different_passwords():
     config = SecretYAML(filepath=TEST_YAML_9_PATH)
@@ -294,11 +300,24 @@ def test_yml_encrypt_and_decrypt_dev_and_default_with_different_passwords():
     assert config.is_default_decrypted()
 
 
-
 def test_yml_file_doesnt_exist():
     with pytest.raises(FileNotFoundError):
         config = SecretYAML(filepath="does_not_exist.yml")
 
+
 def test_invalid_yml_file():
     with pytest.raises(ScannerError):
         config = SecretYAML(filepath=INVALID_YML_TEST_1)
+
+
+def test_invalid_tag_in_yml_file():
+    config = SecretYAML(filepath=ENCRYPTED_TEST_YAML_2_PATH)
+    PASSWORD = "PASSWORD"
+    assert config.is_env_encrypted("dev")
+    config.decrypt_env("dev", PASSWORD)
+    assert config.is_env_decrypted("dev")
+
+    # patch a dummmy object with the settings as attributes
+    settings = LazySettings()
+    settings = config.patch_object_with_env(settings, "dev")
+    breakpoint()

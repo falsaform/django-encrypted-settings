@@ -362,6 +362,9 @@ class SecretYAML(ruml.YAML):
             raise EnvironmentNotFound(msg=f"Environment of {name} not found")
         return mapping_by_str[name]
 
+    def get_env(self, name):
+        return self.get_env_by_name(name)
+
     def is_env_encrypted(self, name):
         return self.is_encrypted(self.get_env_by_name(name))
 
@@ -398,6 +401,13 @@ class SecretYAML(ruml.YAML):
             default_dict.update(env_node_dict)
             return default_dict
         return env_node_dict
+
+    def patch_object_with_env(self, obj, env_name):
+        env = self.get_env_as_dict(env_name)
+        if isinstance(obj, dict):
+            obj.update(env)
+            return obj
+        breakpoint()
 
     def __repr__(self):
         return str(self.data)
