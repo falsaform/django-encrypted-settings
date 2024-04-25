@@ -6,6 +6,8 @@ from django_encrypted_settings.processor import SecretYAML
 from django_encrypted_settings.exceptions import *
 from ansible.parsing.vault import AnsibleVaultError
 
+from ruamel.yaml.scanner import ScannerError
+
 def path_from_fixtures(file_name):
     return os.path.join(os.path.dirname(__file__), file_name)
 
@@ -23,6 +25,7 @@ TEST_YAML_8_PATH = path_from_fixtures("fixtures/test_8.yml")
 TEST_YAML_9_PATH = path_from_fixtures("fixtures/test_9.yml")
 TEST_YAML_10_PATH = path_from_fixtures("fixtures/test_10.yml")
 ENCRYPTED_TEST_YAML_1_PATH = path_from_fixtures("fixtures/encrypted_test_1.yml")
+INVALID_YML_TEST_1 = path_from_fixtures("fixtures/invalid_yml_test_1.yml")
 
 # Helper functions
 def encrypt_env_by_name(env_name, config, password):
@@ -267,10 +270,35 @@ def test_yml_decrypt_with_wrong_password():
 def test_yml_encrypt_with_short_password():
     config = SecretYAML(filepath=TEST_YAML_9_PATH)
     config.encrypt_default(TEST_PASSWORD_SHORT)
-    breakpoint()
+    assert config.is_default_encrypted()
 
-def test_yml_decrypt_with_short_password():
+def test_yml_encrypt_and_decrypt_dev_and_default_with_different_passwords():
     config = SecretYAML(filepath=TEST_YAML_9_PATH)
-    config.encrypt_default(TEST_PASSWORD_1)
-    # config.save_file()
-    breakpoint()
+    assert config.is_env_decrypted("dev")
+    assert config.is_default_decrypted()
+
+    config.encrypt_default("default_password")
+    assert config.is_default_encrypted()
+    assert config.is_env_decrypted("dev")
+
+    config.encrypt_env("dev", "default_dev_password")
+    assert config.is_env_encrypted("dev")
+    assert config.is_default_encrypted()
+
+    config.decrypt_default("default_password")
+    assert config.is_env_encrypted("dev")
+    assert config.is_default_decrypted()
+
+    config.decrypt_env("dev", "default_dev_password")
+    assert config.is_env_decrypted("dev")
+    assert config.is_default_decrypted()
+
+
+
+def test_yml_file_doesnt_exist():
+    with pytest.raises(FileNotFoundError):
+        config = SecretYAML(filepath="does_not_exist.yml")
+
+def test_invalid_yml_file():
+    with pytest.raises(ScannerError):
+        config = SecretYAML(filepath=INVALID_YML_TEST_1)
