@@ -22,6 +22,9 @@ from .exceptions import (
     VersionTagNotSpecified,
     UnsupportedVersionSpecified,
 )
+from .utils import (
+    deep_update
+)
 
 logger = logging.getLogger("django_encrypted_settings")
 
@@ -417,14 +420,14 @@ class SecretYAML(ruml.YAML):
         env_node_dict = self.to_dict(env_node)
         if use_default:
             default_dict = self.to_dict(default_node)
-            default_dict.update(env_node_dict)
+            default_dict = deep_update(default_dict, env_node_dict)
             return default_dict
         return env_node_dict
 
     def patch_object_with_env(self, obj, env_name):
         env = self.get_env_as_dict(env_name)
         if isinstance(obj, dict):
-            obj.update(env)
+            obj = deep_update(obj, env)
             return obj
 
         if str(type(obj)) == "<class 'django.conf.LazySettings'>":
