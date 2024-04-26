@@ -323,6 +323,30 @@ def test_invalid_tag_in_yml_file():
 
     dev_settings = config.get_env_as_dict('dev')
 
-    for k, v in dummy_settings.__dict__.items():
+    for k, v in dev_settings.items():
         assert getattr(dummy_settings, k) == v
 
+
+
+# TODO:
+# new test: handle file where some secrets are encrypted in an env but new ones have been added,
+# allow for encryption, IF the password matches the one that the already encrypted values has been used for
+# otherwise dont encrypt and warn user
+
+# TODO:
+# Warn when a password has been used in multiple envs or is the same as default
+
+# Add !required tag, only allowed in !default tag
+# test it has an ancestory of !default
+# requires that other envs redeclare this key and is overridden
+
+
+# TODO:
+# add environment variable overrides via django-environs, with nested structure support
+# any variables with all uppercase
+
+# TODO:
+# Setup double quoted string support
+def test_double_quoted_string_support():
+    config = SecretYAML(filepath=TEST_YAML_10_PATH)
+    breakpoint()

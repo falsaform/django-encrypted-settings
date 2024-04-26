@@ -1,0 +1,24 @@
+# value type test
+version: 1.0
+!default common:
+  double_quoted_secret_value: !secret value1
+  single_quoted_secret_value: !secret value2
+  secret_value: !secret value3
+  double_quoted_value: !secret value1
+  single_quoted_value: !secret value2
+  value: !secret value3
+  list_with_secrets:
+  - !secret value1
+  - !secret value2
+  - !secret value3
+  mapping_with_secrets:
+    double_quoted_secret_value: !secret value1
+    single_quoted_secret_value: !secret value2
+    secret_value: !secret value3
+    double_quoted_value: !secret value1
+    single_quoted_value: !secret value2
+    value: !secret value3
+
+!env dev:
+  ENV: dev
+  ENVIRONMENT: development

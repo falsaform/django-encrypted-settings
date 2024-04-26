@@ -28,7 +28,7 @@ def dump(args):
         raise FileNotFoundError(args.config)
 
     config = SecretYAML(filepath=args.config)
-    pp = pprint.PrettyPrinter(indent=4, depth=5, stream=None)
+    pp = pprint.PrettyPrinter(depth=5, stream=None)
 
     if env == 'default':
         config.decrypt_default(password)
