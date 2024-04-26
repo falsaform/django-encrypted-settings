@@ -4,6 +4,7 @@ import sys
 from django_encrypted_settings.processor import SecretYAML
 import logging
 import pprint
+import json
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO
@@ -27,14 +28,14 @@ def dump(args):
         raise FileNotFoundError(args.config)
 
     config = SecretYAML(filepath=args.config)
+    pp = pprint.PrettyPrinter(indent=4, depth=5, stream=None)
+
     if env == 'default':
         config.decrypt_default(password)
-        output = pprint.pformat(config.get_default_as_dict())
-        sys.stdout.write(output)
+        pp.pprint(config.get_default_as_dict())
     else:
         config.decrypt_env(env, password)
-        output = pprint.pformat(config.get_env_as_dict(env))
-        sys.stdout.write(output)
+        pp.pprint(config.get_env_as_dict(env))
 
 def main():
     parser = argparse.ArgumentParser(description="Output a decrypted configuration based on the environment.")

@@ -34,10 +34,10 @@ def decrypt(args):
 
     if not args.dryrun:
         config.save_file()
-        output = pprint.pformat(config.deserialized())
+        output = pprint.pformat(config.deserialized(), indent=4, width=1)
         sys.stdout.write(output)
     else:
-        output = pprint.pformat(config.deserialized())
+        output = pprint.pformat(config.deserialized(), indent=4, width=1)
         sys.stdout.write(output)
 
 
