@@ -94,7 +94,7 @@ class EnvSecretConfigMap:
         return str(self.value)
 
     def __repr__(self):
-        return self.__str__()
+        return str(f"{self.yaml_tag} {self.value}")
 
 
 class SecretString:
@@ -113,10 +113,10 @@ class SecretString:
         return cls(node.value)
 
     def __str__(self):
-        return str(f"{self.yaml_tag} {self.value}")
+        return str(self.value)
 
     def __repr__(self):
-        return self.__str__()
+        return str(f"{self.yaml_tag} {self.value}")
 
 
 class EncryptedString:
@@ -135,23 +135,25 @@ class EncryptedString:
         return cls(node.value)
 
     def __str__(self):
-        return str(f"{self.yaml_tag} {self.value}")
+        return str(self.value)
 
     def __repr__(self):
-        return self.__str__()
+        return str(f"{self.yaml_tag} {self.value}")
 
+class RequiredString:
+    yaml_tag = "!required"
 
-def null_op(*args, **kw):
-    return True
+    def __init__(self, value):
+        self.value = value
 
+    @classmethod
+    def to_yaml(cls, representer, node):
+        return representer.represent_scalar(cls.yaml_tag, node.value)
 
-# prevent anchors from being preserved even if there are no aliases for them
-ruml.comments.CommentedBase.yaml_set_anchor = null_op
-ruml.scalarstring.ScalarString.yaml_set_anchor = null_op
-ruml.scalarint.ScalarInt.yaml_set_anchor = null_op
-ruml.scalarfloat.ScalarFloat.yaml_set_anchor = null_op
-ruml.scalarbool.ScalarBoolean.yaml_set_anchor = null_op
-
+    @classmethod
+    def from_yaml(cls, constructor, node):
+        loader = constructor.loader
+        return cls(node.value)
 
 class SecretYAML(ruml.YAML):
     def __init__(self, *args, filepath=None, **kwargs):
@@ -159,13 +161,13 @@ class SecretYAML(ruml.YAML):
         # self.indent(mapping=4, sequence=4, offset=2)
         self.default_flow_style = False
         self.preserve_quotes = True
-        # self.representer.ignore_aliases = null_op
         self.width = 100000
         self.filepath = filepath
         self.register_class(DefaultSecretConfigMap)
         self.register_class(EnvSecretConfigMap)
         self.register_class(EncryptedString)
         self.register_class(SecretString)
+        self.register_class(RequiredString)
         self.data = None
         self.status = None
         self.preserve_quotes = True
@@ -226,15 +228,6 @@ class SecretYAML(ruml.YAML):
         if str(version) != "1.0":
             raise UnsupportedVersionSpecified()
 
-    # def encrypt(self, node=None):
-    #     if node is None:
-    #         node = self.data
-    #     node = self.encrypt_walk(node)
-    #     self.data = node
-    #     buf = io.BytesIO()
-    #     self.dump(self.data, buf)
-    #     return buf.getvalue()
-
     def has_no_secret_tags(self, node):
         return not self.contains_tag_of_type(node, SecretString)
 
@@ -289,14 +282,14 @@ class SecretYAML(ruml.YAML):
                 node[idx] = self.encrypt_walk(item, password)
         return node
 
-    def decrypt(self, node=None):
-        if node is None:
-            node = self.data
-        node = self.decrypt_walk(node)
-        self.data = node
-        buf = io.BytesIO()
-        self.dump(self.data, buf)
-        return buf.getvalue()
+    # def decrypt(self, node=None):
+    #     if node is None:
+    #         node = self.data
+    #     node = self.decrypt_walk(node)
+    #     self.data = node
+    #     buf = io.BytesIO()
+    #     self.dump(self.data, buf)
+    #     return buf.getvalue()
 
     def decrypt_walk(self, node, password):
         if isinstance(node, EncryptedString):
@@ -365,6 +358,9 @@ class SecretYAML(ruml.YAML):
     def get_env(self, name):
         return self.get_env_by_name(name)
 
+    # def get_env_as_dict(self, name):
+    #     return self.to_dict(self.get_env_by_name(name))
+
     def is_env_encrypted(self, name):
         return self.is_encrypted(self.get_env_by_name(name))
 
@@ -386,18 +382,41 @@ class SecretYAML(ruml.YAML):
 
         return self.contains_tag_of_type(node, SecretString)
 
+    def deserialized(self, node=None):
+        if not node:
+            node = self.data
+
+        if self.is_encrypted(node):
+            raise Exception("Cannot deserialize an encrypted node")
+
+        if isinstance(node, EncryptedString):
+            raise Exception("EncryptedString cannot be flattened")
+        if isinstance(node, SecretString):
+            node = node.value
+        elif isinstance(node, dict):
+            for k, v in node.items():
+                node[k] = self.deserialized(v)
+        elif isinstance(node, list):
+            for idx, item in enumerate(node):
+                node[idx] = self.deserialized(item)
+        return node
+
     def to_dict(self, node=None):
         if node is None:
             node = self.data
-        return dict(self.data)
+        return self.deserialized(dict(node))
+
+    def get_default_as_dict(self):
+        default_node = self.get_default()
+        default_dict = self.to_dict(default_node)
+        return default_dict
 
     def get_env_as_dict(self, env, use_default=True):
         default_node = self.get_default()
         env_node = self.get_env_by_name(env)
-
-        env_node_dict = dict(env_node)
+        env_node_dict = self.to_dict(env_node)
         if use_default:
-            default_dict = dict(default_node)
+            default_dict = self.to_dict(default_node)
             default_dict.update(env_node_dict)
             return default_dict
         return env_node_dict
@@ -407,7 +426,12 @@ class SecretYAML(ruml.YAML):
         if isinstance(obj, dict):
             obj.update(env)
             return obj
-        breakpoint()
+
+        if str(type(obj)) == "<class 'django.conf.LazySettings'>":
+            for k, v in env.items():
+                setattr(obj, k, v)
+                getattr(obj, k)
+            return obj
 
     def __repr__(self):
         return str(self.data)

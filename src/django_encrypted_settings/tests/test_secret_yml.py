@@ -309,7 +309,6 @@ def test_invalid_yml_file():
     with pytest.raises(ScannerError):
         config = SecretYAML(filepath=INVALID_YML_TEST_1)
 
-
 def test_invalid_tag_in_yml_file():
     config = SecretYAML(filepath=ENCRYPTED_TEST_YAML_2_PATH)
     PASSWORD = "PASSWORD"
@@ -318,6 +317,12 @@ def test_invalid_tag_in_yml_file():
     assert config.is_env_decrypted("dev")
 
     # patch a dummmy object with the settings as attributes
-    settings = LazySettings()
-    settings = config.patch_object_with_env(settings, "dev")
-    breakpoint()
+    settings.configure({})
+    dummy_settings = settings
+    dummy_settings = config.patch_object_with_env(dummy_settings, "dev")
+
+    dev_settings = config.get_env_as_dict('dev')
+
+    for k, v in dummy_settings.__dict__.items():
+        assert getattr(dummy_settings, k) == v
+
