@@ -1,10 +1,8 @@
 import argparse
 import os
-import sys
 from django_encrypted_settings.processor import SecretYAML
 import logging
 import pprint
-import json
 
 logger = logging.getLogger(__name__)
 logger.level = logging.INFO

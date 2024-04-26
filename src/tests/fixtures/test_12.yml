@@ -1,0 +1,24 @@
+# value type test
+version: 1.0
+!default common:
+  TEST: "TEST_VALUE"
+  value_1: "value_1"
+  value_2: 'value_2'
+  value_3: value_3
+  value_4: True
+  value_5: False
+  value_6: true
+  value_7: false
+  value_8: 5
+  value_9: 6.5
+  value_10: -1
+  value_11: -0.5
+  value_12: -1000
+  value_13: $TEST
+  value_14: "$TEST"
+  value_15: " test value with spaces "
+  value_16: '90d_soindas*()+=[];],/?\|0ds0m9)!JW)(NSCN()MSC!_X)%#$!.'
+
+!env dev:
+  ENV: dev
+  ENVIRONMENT: development

@@ -4,6 +4,8 @@ import logging
 import pprint
 
 import ruamel.yaml as ruml
+from ruamel.yaml import CommentedMap, CommentedSeq
+from ruamel.yaml.scalarfloat import ScalarFloat
 
 from .exceptions import (
     NoDefaultMapTagDefinedException,
@@ -16,34 +18,81 @@ from .exceptions import (
     VersionTagNotSpecified,
     UnsupportedVersionSpecified,
 )
+from .tags import (
+    DefaultSecretConfigMap,
+    EnvSecretConfigMap,
+    EncryptedString,
+    SecretString,
+    RequiredString,
+    OtherScalar
+)
 from .constants import CONTAINS_ENCRYPTED_TAGS, CONTAINS_UNENCRYPTED_TAGS
-from .tags import DefaultSecretConfigMap, EnvSecretConfigMap, EncryptedString, SecretString, RequiredString
 from .utils import deep_update, encrypt_value, decrypt_value
+
+from ruamel.yaml.nodes import ScalarNode
+
+
+class StyledScalar:
+    def __init__(self, value, style):
+        self.value = value
+        self.style = style
+
+    def __hash__(self):
+        return hash((self.value, self.style))
+
+    def __eq__(self, other):
+        if isinstance(other, StyledScalar):
+            return self.value == other.value and self.style == other.style
+        return False
+
+    def __repr__(self):
+        return str(self.value)
+
+    def __str__(self):
+        return str(self.value)
+
+
+def scalar_constructor(loader, node):
+    assert isinstance(node, ScalarNode)
+    style = node.style  # None (plain), ' (single-quoted), or " (double-quoted)
+    value = loader.construct_scalar(node)
+    return StyledScalar(value, style)
+
+
+def scalar_representer(dumper, data):
+    if isinstance(data, StyledScalar):
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data.value, style=data.style)
 
 
 logger = logging.getLogger("django_encrypted_settings")
+
 
 class SecretYAML(ruml.YAML):
     def __init__(self, *args, filepath=None, **kwargs):
         super().__init__(*args, **kwargs)
         # self.indent(mapping=4, sequence=4, offset=2)
-        self.default_flow_style = False
-        self.preserve_quotes = True
         self.width = 100000
         self.filepath = filepath
+        self.data = None
+        self.status = None
+        # ruamel yaml settings
         self.register_class(DefaultSecretConfigMap)
         self.register_class(EnvSecretConfigMap)
         self.register_class(EncryptedString)
         self.register_class(SecretString)
         self.register_class(RequiredString)
-        self.data = None
-        self.status = None
+        self.register_class(OtherScalar)
+        self.constructor.add_constructor('tag:yaml.org,2002:str', scalar_constructor)
+        self.representer.add_representer(StyledScalar, scalar_representer)
+
+        self.default_flow_style = True
         self.preserve_quotes = True
+        self.explicit_start = False
         self.anchor = None  # This tells ruamel.yaml to not use anchors
+        # self.representer.default_style = '"'
 
         if self.filepath:
             self.data = self.load_file(self.filepath)
-
         if self.data:
             self.validate()
 
@@ -90,7 +139,7 @@ class SecretYAML(ruml.YAML):
         self.version_check()
 
     def version_check(self):
-        version = self.data.get("version", False)
+        version = self.to_dict().get("version", False)
         if not version:
             raise VersionTagNotSpecified()
         if str(version) != "1.0":
@@ -140,8 +189,7 @@ class SecretYAML(ruml.YAML):
     def encrypt_walk(self, node, password):
         if isinstance(node, SecretString):
             encrypted_string = encrypt_value(node.value, password, node)
-            del node
-            node = EncryptedString(encrypted_string)
+            node = EncryptedString(encrypted_string, style=node.style)
         elif isinstance(node, dict):
             for k, v in node.items():
                 node[k] = self.encrypt_walk(v, password)
@@ -150,20 +198,10 @@ class SecretYAML(ruml.YAML):
                 node[idx] = self.encrypt_walk(item, password)
         return node
 
-    # def decrypt(self, node=None):
-    #     if node is None:
-    #         node = self.data
-    #     node = self.decrypt_walk(node)
-    #     self.data = node
-    #     buf = io.BytesIO()
-    #     self.dump(self.data, buf)
-    #     return buf.getvalue()
-
     def decrypt_walk(self, node, password):
         if isinstance(node, EncryptedString):
             decrypted_string = decrypt_value(node.value, password, node)
-            del node
-            node = SecretString(decrypted_string)
+            node = SecretString(decrypted_string, style=node.style)
         elif isinstance(node, dict):
             for k, v in node.items():
                 node[k] = self.decrypt_walk(v, password)
@@ -258,29 +296,28 @@ class SecretYAML(ruml.YAML):
 
         return self.contains_tag_of_type(node, SecretString)
 
-    def deserialized(self, node=None):
-        if not node:
-            node = self.data
-
-        if self.is_encrypted(node):
-            raise Exception("Cannot deserialize an encrypted node")
-
-        if isinstance(node, EncryptedString):
-            raise Exception("EncryptedString cannot be flattened")
-        if isinstance(node, SecretString):
-            node = node.value
-        elif isinstance(node, dict):
-            for k, v in node.items():
-                node[k] = self.deserialized(v)
-        elif isinstance(node, list):
-            for idx, item in enumerate(node):
-                node[idx] = self.deserialized(item)
-        return node
-
     def to_dict(self, node=None):
         if node is None:
             node = self.data
-        return self.deserialized(dict(node))
+        if isinstance(node, EncryptedString):
+            # TODO: raise warning on encrypted string being dict dumped
+            return f"{node.value}"
+        if isinstance(node, CommentedMap):
+            return {f"{k}": self.to_dict(v) for k, v in node.items()}
+        elif isinstance(node, CommentedSeq):
+            return [self.to_dict(item) for item in node]
+        elif isinstance(node, ScalarFloat):
+            return node
+        elif isinstance(node, ScalarNode):
+            return f"{node}"
+        elif isinstance(node, StyledScalar):
+            return f"{node}"
+        elif isinstance(node, SecretString):
+            return f"{node.value}"
+        elif isinstance(node, int):
+            return node
+        else:
+            return node
 
     def get_default_as_dict(self):
         default_node = self.get_default()
