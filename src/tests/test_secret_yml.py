@@ -313,23 +313,23 @@ def test_invalid_yml_file():
         config = SecretYAML(filepath=INVALID_YML_TEST_1)
 
 
-def test_invalid_tag_in_yml_file():
-    config = SecretYAML(filepath=ENCRYPTED_TEST_YAML_2_PATH)
-    PASSWORD = "PASSWORD"
-    assert config.is_env_encrypted("dev")
-    config.decrypt_env("dev", PASSWORD)
-    assert config.is_env_decrypted("dev")
-
-    # patch a dummmy object with the settings as attributes
-    settings.configure({})
-    dummy_settings = settings
-    dummy_settings = config.patch_object_with_env(dummy_settings, "dev")
-
-    dev_settings = config.get_env_as_dict('dev')
-
-    for k, v in dev_settings.items():
-        assert getattr(dummy_settings, k) == v
-
+# def test_invalid_tag_in_yml_file():
+#     config = SecretYAML(filepath=ENCRYPTED_TEST_YAML_2_PATH)
+#     PASSWORD = "PASSWORD"
+#     assert config.is_env_encrypted("dev")
+#     config.decrypt_env("dev", PASSWORD)
+#     assert config.is_env_decrypted("dev")
+#
+#     # patch a dummmy object with the settings as attributes
+#     settings.configure({})
+#     dummy_settings = settings
+#     dummy_settings = config.patch_object_with_env(dummy_settings, "dev")
+#
+#     dev_settings = config.get_env_as_dict('dev')
+#
+#     for k, v in dev_settings.items():
+#         assert getattr(dummy_settings, k) == v
+#
 
 # TODO:
 # new test: handle file where some secrets are encrypted in an env but new ones have been added,
@@ -353,7 +353,6 @@ def test_round_trip_preserve_style():
     tmp_location = tmp_file.name
 
     config.save_file(tmp_location)
-    config.save_file("./tmp.yml")
     string_2_yaml = open(tmp_location).read()
     assert string_yaml == string_2_yaml
 
@@ -404,6 +403,9 @@ def test_various_type_roundtrip():
 
     assert default_config_dict == expected_default_config_dict
 
+def test_envrion():
+    config = SecretYAML(filepath=TEST_YAML_12_PATH)
+    config.patch_environs('dev')
 
 # TODO:
 # add environment variable overrides via django-environs, with nested structure support

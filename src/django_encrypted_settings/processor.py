@@ -7,6 +7,7 @@ import ruamel.yaml as ruml
 from ruamel.yaml import CommentedMap, CommentedSeq
 from ruamel.yaml.scalarfloat import ScalarFloat
 
+from .environ_helper import generate_dynamic_environ
 from .exceptions import (
     NoDefaultMapTagDefinedException,
     TooManyDefaultMapTagsDefinedException,
@@ -345,6 +346,11 @@ class SecretYAML(ruml.YAML):
                 setattr(obj, k, v)
                 getattr(obj, k)
             return obj
+
+    def patch_environs(self, env):
+        obj = {}
+        config = self.get_env_as_dict(env)
+        return generate_dynamic_environ(config)
 
     def __repr__(self):
         pp = pprint.PrettyPrinter(depth=5, stream=None)
