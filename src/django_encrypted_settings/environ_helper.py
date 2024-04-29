@@ -5,7 +5,6 @@ def generate_dynamic_environ(config):
     env = Env()
     env.read_env()
     settings.configure({})
-    breakpoint()
     # Set environment variables dynamically
     for key, value in list(config.items()):
         # Determine the type of the value
@@ -21,5 +20,3 @@ def generate_dynamic_environ(config):
             # Default to string
             var = env.str(key, default=str(value))
             setattr(settings, key, var)
-
-    breakpoint()

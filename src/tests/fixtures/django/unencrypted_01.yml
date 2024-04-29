@@ -1,0 +1,20 @@
+version: 1.0
+!default common:
+  allowed_hosts:
+    - localhost
+  shared_api_keys:
+    google_api: "blah"
+    uber_api: "blah2"
+  postgres_password: NONE
+  
+!env dev:
+  allowed_hosts:
+    - sitename.dev.octave.nz
+  postgres_password: DEVELOPMENT
+
+!env stage:
+  allowed_hosts:
+    - test.sitename.nz
+    - sitename.stage.octave.nz
+    - sitename-origin.stage.octave.nz
+  postgres_password: STAGE

@@ -36,7 +36,6 @@ class DefaultSecretConfigMap:
 
     @classmethod
     def to_yaml(cls, representer, node):
-        # breakpoint()
         return representer.represent_scalar(cls.yaml_tag, node.value)
 
     @classmethod
@@ -61,7 +60,6 @@ class EnvSecretConfigMap:
 
     @classmethod
     def to_yaml(cls, representer, node):
-        # breakpoint()
         return representer.represent_scalar(cls.yaml_tag, node.value, style=node.style)
 
     @classmethod

@@ -6,7 +6,6 @@ from django_encrypted_settings.processor import SecretYAML
 from django_encrypted_settings.exceptions import *
 from ansible.parsing.vault import AnsibleVaultError
 from ruamel.yaml.scanner import ScannerError
-from django.conf import settings, LazySettings
 
 
 def path_from_fixtures(file_name):
@@ -15,23 +14,23 @@ def path_from_fixtures(file_name):
 
 TEST_PASSWORD_1 = "Rna!nom8*"
 TEST_PASSWORD_SHORT = "four"
-TEST_YAML_1_PATH = path_from_fixtures("fixtures/test_1.yml")
-TEST_YAML_2_PATH = path_from_fixtures("fixtures/test_2.yml")
-TEST_YAML_3_PATH = path_from_fixtures("fixtures/test_3.yml")
-TEST_YAML_4_PATH = path_from_fixtures("fixtures/test_4.yml")
-TEST_YAML_5_PATH = path_from_fixtures("fixtures/test_5.yml")
-TEST_YAML_6_PATH = path_from_fixtures("fixtures/test_6.yml")
-TEST_YAML_7_PATH = path_from_fixtures("fixtures/test_7.yml")
-TEST_YAML_8_PATH = path_from_fixtures("fixtures/test_8.yml")
-TEST_YAML_9_PATH = path_from_fixtures("fixtures/test_9.yml")
-TEST_YAML_10_PATH = path_from_fixtures("fixtures/test_10.yml")
-TEST_YAML_11_PATH = path_from_fixtures("fixtures/test_11.yml")
-TEST_YAML_12_PATH = path_from_fixtures("fixtures/test_12.yml")
+TEST_YAML_1_PATH = path_from_fixtures("fixtures/basic/test_1.yml")
+TEST_YAML_2_PATH = path_from_fixtures("fixtures/basic/test_2.yml")
+TEST_YAML_3_PATH = path_from_fixtures("fixtures/basic/test_3.yml")
+TEST_YAML_4_PATH = path_from_fixtures("fixtures/basic/test_4.yml")
+TEST_YAML_5_PATH = path_from_fixtures("fixtures/basic/test_5.yml")
+TEST_YAML_6_PATH = path_from_fixtures("fixtures/basic/test_6.yml")
+TEST_YAML_7_PATH = path_from_fixtures("fixtures/basic/test_7.yml")
+TEST_YAML_8_PATH = path_from_fixtures("fixtures/basic/test_8.yml")
+TEST_YAML_9_PATH = path_from_fixtures("fixtures/basic/test_9.yml")
+TEST_YAML_10_PATH = path_from_fixtures("fixtures/basic/test_10.yml")
+TEST_YAML_11_PATH = path_from_fixtures("fixtures/basic/test_11.yml")
+TEST_YAML_12_PATH = path_from_fixtures("fixtures/basic/test_12.yml")
 
-ENCRYPTED_TEST_YAML_1_PATH = path_from_fixtures("fixtures/encrypted_test_1.yml")
-ENCRYPTED_TEST_YAML_2_PATH = path_from_fixtures("fixtures/encrypted_test_2.yml")
-INVALID_YML_TEST_1 = path_from_fixtures("fixtures/invalid_yml_test_1.yml")
-INVALID_YML_TEST_2 = path_from_fixtures("fixtures/invalid_yml_test_2.yml")
+ENCRYPTED_TEST_YAML_1_PATH = path_from_fixtures("fixtures/encrypted/encrypted_test_1.yml")
+ENCRYPTED_TEST_YAML_2_PATH = path_from_fixtures("fixtures/encrypted/encrypted_test_2.yml")
+INVALID_YML_TEST_1 = path_from_fixtures("fixtures/basic/invalid_yml_test_1.yml")
+INVALID_YML_TEST_2 = path_from_fixtures("fixtures/basic/invalid_yml_test_2.yml")
 
 
 # Helper functions
