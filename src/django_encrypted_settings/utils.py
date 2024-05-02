@@ -34,7 +34,7 @@ def encrypt_value(value, password, node):
         raise AnsibleVaultError(f"Could not encrypt node: {node}")
 
 
-def decrypt_value(value, password, node):
+def decrypt_value(value, password, node, raise_exception=True):
     try:
         vault = VaultLib([(DEFAULT_VAULT_ID_MATCH, VaultSecret(password.encode()))])
         decrypted_value = vault.decrypt(
@@ -43,4 +43,12 @@ def decrypt_value(value, password, node):
         return decrypted_value.decode()
     except Exception as e:
         print(f"Error during decryption: {e}")
-        raise AnsibleVaultError(f"Could not encrypt node: {node}")
+        if raise_exception:
+            raise AnsibleVaultError(f"Could not encrypt node: {node}")
+
+
+def flatten_list(matrix):
+    flat_list = []
+    for row in matrix:
+        flat_list.extend(row)
+    return flat_list

@@ -20,12 +20,17 @@ publish-package:
 up *args:
     docker compose up {{args}}
 
+# hello world
 bash *args:
     docker compose exec dev bash {{args}}
 
 test *args:
     #!/bin/bash
     docker compose run --entrypoint "poetry run pytest {{args}}" dev
+
+test-ansible *args:
+    #!/bin/bash
+    docker compose run dev 'bash -c "cd src/tests/ansible && ./test.sh {{ args }}"'
 
 black *args:
     just poetry run black .

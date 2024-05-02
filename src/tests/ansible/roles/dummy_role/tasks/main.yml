@@ -1,0 +1,11 @@
+- name: Test outputting decrypted AWS_SECRET_KEY from encrypted env
+  debug: msg="AWS_SECRET_KEY={{ AWS_SECRET_KEY }}"
+
+- name: Test outputting decrypted GOOGLE_ANALYTICS_ID from encrypted env
+  debug: msg="GOOGLE_ANALYTICS_ID={{ GOOGLE_ANALYTICS_ID }}"
+
+- name: Test outputting decrypted postgres database password  from encrypted env
+  debug: msg="DATABASES.default.PASSWORD= {{ DATABASES.default.PASSWORD }}"
+
+- name: Test outputting decrypted DJANGO_SECRET_KEY from encrypted env
+  debug: msg="DJANGO_SECRET_KEY= {{ DJANGO_SECRET_KEY }}"

@@ -1,0 +1,7 @@
+- hosts:
+    - development
+    - staging
+    - production
+  connection: local
+  roles:
+    - dummy_role

@@ -163,21 +163,22 @@ class SecretYAML(ruml.YAML):
         self.encrypt_walk(node, password)
         logger.info(f"Encrypted environment {env_name}")
 
-    def decrypt_env(self, env_name, password):
+    def decrypt_env(self, env_name, password, raise_exception=True):
         node = self.get_env_by_name(env_name)
         if self.is_decrypted(node):
-            raise EnvironmentIsAlreadyDecrypted()
+            if raise_exception:
+                raise EnvironmentIsAlreadyDecrypted()
 
-        self.decrypt_walk(node, password)
+        self.decrypt_walk(node, password, raise_exception=raise_exception)
         logger.info(f"Encrypted environment {env_name}")
 
     def encrypt_default(self, password):
         node = self.get_default()
         self.encrypt_walk(node, password)
 
-    def decrypt_default(self, password):
+    def decrypt_default(self, password, raise_exception=True):
         node = self.get_default()
-        self.decrypt_walk(node, password)
+        self.decrypt_walk(node, password, raise_exception=raise_exception)
 
     def is_default_encrypted(self):
         node = self.get_default()
@@ -199,16 +200,16 @@ class SecretYAML(ruml.YAML):
                 node[idx] = self.encrypt_walk(item, password)
         return node
 
-    def decrypt_walk(self, node, password):
+    def decrypt_walk(self, node, password, raise_exception=True):
         if isinstance(node, EncryptedString):
-            decrypted_string = decrypt_value(node.value, password, node)
+            decrypted_string = decrypt_value(node.value, password, node, raise_exception=raise_exception)
             node = SecretString(decrypted_string, style=node.style)
         elif isinstance(node, dict):
             for k, v in node.items():
-                node[k] = self.decrypt_walk(v, password)
+                node[k] = self.decrypt_walk(v, password, raise_exception=raise_exception)
         elif isinstance(node, list):
             for idx, item in enumerate(node):
-                node[idx] = self.decrypt_walk(item, password)
+                node[idx] = self.decrypt_walk(item, password, raise_exception=raise_exception)
         return node
 
     def load_file(self, filepath):
@@ -293,7 +294,8 @@ class SecretYAML(ruml.YAML):
         if node is None:
             node = self.data
         if self.contains_tag_of_type(node, EncryptedString):
-            logger.warning(CONTAINS_ENCRYPTED_TAGS)
+            pass
+            # logger.warning(CONTAINS_ENCRYPTED_TAGS)
 
         return self.contains_tag_of_type(node, SecretString)
 
