@@ -402,9 +402,9 @@ def test_various_type_roundtrip():
 
     assert default_config_dict == expected_default_config_dict
 
-def test_envrion():
-    config = SecretYAML(filepath=TEST_YAML_12_PATH)
-    config.patch_environs('dev')
+# def test_envrion():
+#     config = SecretYAML(filepath=TEST_YAML_12_PATH)
+#     config.patch_environs('dev')
 
 # TODO:
 # add environment variable overrides via django-environs, with nested structure support

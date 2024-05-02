@@ -16,8 +16,6 @@ def test_loading_file_using_django_helper_no_password_or_encryption():
     dev_config_dict = load_settings_from_config(
         UNENCRYPTED_CONFIG_PATH_1,
         "dev",
-        environment_password=None,
-        default_password=None, 
     )
 
     expected_dev_config = {'allowed_hosts': ['sitename.dev.octave.nz'], 'shared_api_keys': {'google_api': 'blah', 'uber_api': 'blah2'}, 'postgres_password': 'DEVELOPMENT'}
@@ -33,8 +31,7 @@ def test_loading_file_using_django_helper_dev_password_no_default():
     dev_config_dict = load_settings_from_config(
         ENCRYPTED_CONFIG_PATH_1,
         "dev",
-        environment_password=dev_password,
-        default_password=None,
+        passwords=[dev_password],
     )
     expected_dev_config = {'allowed_hosts': ['sitename.dev.octave.nz'], 'shared_api_keys': {'google_api': 'blah', 'uber_api': 'blah2'}, 'postgres_password': 'DEVELOPMENT'}
     assert dev_config_dict == expected_dev_config
@@ -42,8 +39,7 @@ def test_loading_file_using_django_helper_dev_password_no_default():
     stage_config_dict = load_settings_from_config(
         ENCRYPTED_CONFIG_PATH_1,
         "stage",
-        environment_password=stage_password,
-        default_password=None,
+        passwords=[stage_password],
     )
     expected_stage_config = {'allowed_hosts': ['test.sitename.nz', 'sitename.stage.octave.nz', 'sitename-origin.stage.octave.nz'], 'shared_api_keys': {'google_api': 'blah', 'uber_api': 'blah2'}, 'postgres_password': 'STAGE'}
     assert stage_config_dict == expected_stage_config
