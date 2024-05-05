@@ -18,7 +18,9 @@ from .exceptions import (
     EnvironmentHasNoSecretTagsException,
     VersionTagNotSpecified,
     UnsupportedVersionSpecified,
+    UnsupportedEncryptionMethodSpecified,
 )
+
 from .tags import (
     DefaultSecretConfigMap,
     EnvSecretConfigMap,
@@ -27,7 +29,9 @@ from .tags import (
     RequiredString,
     OtherScalar,
 )
-from .constants import CONTAINS_ENCRYPTED_TAGS, CONTAINS_UNENCRYPTED_TAGS
+
+
+from .constants import CONTAINS_ENCRYPTED_TAGS, CONTAINS_UNENCRYPTED_TAGS, VALID_ENCRYPTION_METHODS, ANSIBLE_VAULT_ENCRYPTION_METHOD
 from .utils import deep_update, encrypt_value, decrypt_value
 
 from ruamel.yaml.nodes import ScalarNode
@@ -78,6 +82,8 @@ class SecretYAML(ruml.YAML):
         self.filepath = filepath
         self.data = None
         self.status = None
+        self.encryption_method = ANSIBLE_VAULT_ENCRYPTION_METHOD # defaults to ansible vault
+
         # ruamel yaml settings
         self.register_class(DefaultSecretConfigMap)
         self.register_class(EnvSecretConfigMap)
@@ -92,7 +98,6 @@ class SecretYAML(ruml.YAML):
         self.preserve_quotes = True
         self.explicit_start = False
         self.anchor = None  # This tells ruamel.yaml to not use anchors
-        # self.representer.default_style = '"'
 
         if self.filepath:
             self.data = self.load_file(self.filepath)
@@ -140,6 +145,7 @@ class SecretYAML(ruml.YAML):
         if len(self.envs) == 0:
             raise NoEnvironmentsDefinedException()
         self.version_check()
+        self.encryption_spec_check()
 
     def version_check(self):
         version = self.to_dict().get("version", False)
@@ -147,6 +153,14 @@ class SecretYAML(ruml.YAML):
             raise VersionTagNotSpecified()
         if str(version) != "1.0":
             raise UnsupportedVersionSpecified()
+
+    def encryption_spec_check(self):
+        encryption_method = self.to_dict().get("encryption_method", self.encryption_method)
+        if str(encryption_method) not in VALID_ENCRYPTION_METHODS:
+            raise UnsupportedEncryptionMethodSpecified(encryption_method)
+
+        logger.debug(f'Using {encryption_method} encryption method')
+        self.encryption_method = encryption_method
 
     def has_no_secret_tags(self, node):
         return not self.contains_tag_of_type(node, SecretString)
@@ -328,6 +342,7 @@ class SecretYAML(ruml.YAML):
         elif isinstance(node, int):
             return node
         else:
+            print(type(node))
             return node
 
     def get_default_as_dict(self):
