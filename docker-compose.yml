@@ -1,7 +1,8 @@
-version: '3.8'
 services:
-  dev:
-    build: .
+  development:
+    build:
+      dockerfile: ./docker/Dockerfile
+      context: .
     volumes:
       - .:/app
     stdin_open: true

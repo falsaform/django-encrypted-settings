@@ -1,6 +1,6 @@
 import os
 from typing import List
-from django_encrypted_settings.processor import SecretYAML
+from eyaml.processor import SecretYAML
 
 
 def load_settings_from_config(

@@ -1,5 +1,5 @@
 import os
-from django_encrypted_settings.django import load_settings_from_config
+from eyaml.django import load_settings_from_config
 
 
 def path_from_fixtures(file_name):

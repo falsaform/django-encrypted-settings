@@ -34,8 +34,8 @@ from ansible.utils.path import basedir
 from ansible.inventory.group import InventoryObjectType
 from ansible.utils.vars import combine_vars
 
-from django_encrypted_settings.django import load_settings_from_config
-from django_encrypted_settings.utils import flatten_list
+from eyaml.django import load_settings_from_config
+from eyaml.utils import flatten_list
 
 CANONICAL_PATHS = {}  # type: dict[str, str]
 FOUND = {}  # type: dict[str, list[str]]

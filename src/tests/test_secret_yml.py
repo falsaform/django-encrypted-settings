@@ -2,11 +2,11 @@ import os
 import pytest
 import tempfile
 
-from django_encrypted_settings.processor import SecretYAML
-from django_encrypted_settings.exceptions import *
 from ansible.parsing.vault import AnsibleVaultError
 from ruamel.yaml.scanner import ScannerError
 
+from eyaml.processor import SecretYAML
+from eyaml.exceptions import *
 
 def path_from_fixtures(file_name):
     return os.path.join(os.path.dirname(__file__), file_name)

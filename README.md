@@ -1,35 +1,57 @@
-### Problem
-As projects get bigger and more complex more configuration options and secrets need to be declared and passed through to django. 
-Typically in a container based deployment any secrets would be passed in as an environment variables. This becomes hard to manage and tedious.
+### EYAML
+This python module allows for the encryption, decryption and retreval of settings from a custom yaml file.
 
-Currently we store the configuration in a mixture of ways, django settings partials of settings partials and using  ansible and ansible vault to template  .env file has become cumbersome 
-In staging/production we deploy docker containers and have to pass these settings and secrets in as environment variables. 
-Which means declaring it in the env varaible for the django service, as well as writing boiler plate to read them in again inside the django settings partials.
+As projects get bigger and more complex, large amounts of configuration options and secrets need to be declared and passed through to your application.
+
+Typically in a container based deployment any secrets would be passed in as an environment variables. 
+This becomes hard to manage and tedious as your project grows.
+
+Solutions like mozilla sops are great, but arent very git or DX friendly, you have no ability to defined multiple environments
+and you are also required to right logic in your application to capture these environment variables.
+
+In my current job we store the secrets and configuration options in an ansible vault, one per host/group or environment 
+We gather our application settings and secrets from ansible, decrypted any vault secrets and pass them into the container
+at run time as environment variables. 
+
+For each setting or secret an environment variable input needs to be declared inside the application.
 
 
-This package aims to solve the problems across all envrionments in a easy, secure and tooling friendly way.
+Lets say you need to debug an issue with production:
 
-Configuration is done in one file, A yml file which can sections (envs) encrypted, similiar to mozilla sops, but we currently only support password based encryption relying 
-on ansible vault to secure the secrets.
+You can look at logs for production, exec into the running container and debug from there, 
+or download and run the production container, but if the secrets have changed in your source of truth,
+production is not replicable, nor can rollbacks to previous deployments or containers be relied upon.
 
 
-### Base yml config
+We have to declare the variables in a django settings partials and use django-environs to pull these variables in.
 
-A default configuration set must be defined which allows for envrionment specific configuration to be merged on top.
+This package aims to solve the problems across all environments in a DX friendly, secure and CICD friendly way.
+
+Configuration is done in a single file, A yml file which is split into environments (envs) and a set of defaults.
+Secrets are encrypted per environment, each with their own password. The default set of configuration can also be 
+encrypted if there are shared default secrets.
+
+
+
+### Base EYAML config
+A default configuration set must be defined which allows for project specific configuration to be defined, environmental 
+settings override the default configuration and are merged on top.
+
 The default environment can also be encrypted, if required.
 
-Encrypted variables in the the default configuration or environment are stored inline using a custom set of tags
+Encrypted variables in the the default configuration or environment are stored inline using a custom set of tags and encrypted using ansible vault.
 
 !secret for an unencrypted secret.
 !encrypted for encrypted version of the !secret tag.
 
-Helper methods have been written to allow for encryption and decryption of the config file
+Helper methods have been written to allow for encryption and decryption of the config file.
 There are also helper methods to load this config file into django along with any passwords to unlock them and use the secrets directly without having to redeclare them.
 
-Having all the configuration and settings human readable while secure and encrypted makes PRs easier to understand, ensuring you know what secret changed when.
-Having a default env allows for project level configuration in one place.
+Having all the configuration and settings in a human readable, secure and encrypted file makes PRs which change settings easier 
+to understand, read and ensuring you know which secrets changed and when.
 
-At the root of the yaml two tags the following at minimum should be defined
+The following is an example of a basic eyaml setup. 
+the root of the yaml two tags the following should be defined
 ```
 version: 1.0
 !default all:
@@ -38,6 +60,11 @@ version: 1.0
     environment: "development"
     env: "dev"    
 ```
+
+version
+!default
+and !env
+
 This file cannot be encrypted as it does not define any secrets
 
 

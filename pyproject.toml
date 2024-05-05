@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "django_encrypted_settings"
-version = "1.0.0"
-description = "A utility to store encrypt and decrypt django settings files in YAML using Ansible Vault encryption"
+name = "eyaml"
+version = "0.1.0"
+description = "A python module to store, encrypt and decrypt secrets variables in an encrypted yaml file using Ansible Vault encryption"
 authors = ["Dan Brosnan <dpjbrosnan@gmail.com>"]
-packages = [{ include = "django_encrypted_settings", from = "src" }]
+packages = [{ include = "eyaml", from = "src" }]
 
 
 [tool.poetry.dependencies]
@@ -22,6 +22,4 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.poetry.scripts]
-encrypt = "django_encrypted_settings.commands.encrypt:main"
-decrypt = "django_encrypted_settings.commands.decrypt:main"
-dump    = "django_encrypted_settings.commands.dump:main"
+eyaml = "eyaml.commands.eyaml:main"

@@ -65,7 +65,7 @@ def scalar_representer(dumper, data):
         return dumper.represent_scalar('tag:yaml.org,2002:str', data.value, style=data.style)
 
 
-logger = logging.getLogger("django_encrypted_settings")
+logger = logging.getLogger("eyaml")
 
 
 class SecretYAML(ruml.YAML):
