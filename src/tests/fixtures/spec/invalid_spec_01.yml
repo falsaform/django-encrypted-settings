@@ -1,0 +1,8 @@
+version: 1.0
+encryption_method: fernet
+
+!default common:
+  not_much: going on here
+
+!env dev:
+  not_much: here either

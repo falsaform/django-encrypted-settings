@@ -1,0 +1,18 @@
+version: 1.0
+encryption_method: ansible-vault
+
+!default common:
+  postgres_db_name: wagtail_pg_db
+  postgres_db_user: wagtail_pg_db
+  google_secret_key: !secret TEST_KEY
+  postgres_port: 3456
+  django_secret_key: "DEFAULT"
+  POSTGRES:
+    db_name: hoiusdahoias
+    db_password: kjnasndasnlk
+
+!env dev:
+  allowed_hosts:
+    - localhost
+    - sitename.dev.octave.nz
+  postgres_password: !secret DEVELOPMENT_PASSWORD

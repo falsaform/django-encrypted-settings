@@ -1,3 +1,4 @@
+from .constants import VALID_ENCRYPTION_METHODS
 class InvalidSettingsProvided(Exception):
     pass
 
@@ -53,4 +54,11 @@ class VersionTagNotSpecified(Exception):
 
 class UnsupportedVersionSpecified(Exception):
     def __init__(self, msg="Only version 1.0 is currently supported"):
+        super().__init__(msg)
+
+
+class UnsupportedEncryptionMethodSpecified(Exception):
+    def __init__(self, encryption_method):
+        encryption_methods = ', '.join(VALID_ENCRYPTION_METHODS)
+        msg = f"Invalid encryption method specified: {encryption_method}, must be one of {encryption_methods}"
         super().__init__(msg)
