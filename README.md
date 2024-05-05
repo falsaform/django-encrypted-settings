@@ -1,7 +1,10 @@
 ### EYAML
-This python module allows for the encryption, decryption and retreval of settings from a custom yaml file.
+This python module allows for the encryption, decryption and retrieval of variables from a yaml file
+using a set custom yaml tags !secret, !encrypted, !default and !required.
 
-As projects get bigger and more complex, large amounts of configuration options and secrets need to be declared and passed through to your application.
+#### Problem
+As projects get bigger and more complex, large amounts of configuration options and secrets need to be declared 
+and passed through to your application.
 
 Typically in a container based deployment any secrets would be passed in as an environment variables. 
 This becomes hard to manage and tedious as your project grows.
@@ -43,6 +46,10 @@ Encrypted variables in the the default configuration or environment are stored i
 
 !secret for an unencrypted secret.
 !encrypted for encrypted version of the !secret tag.
+!default for declaring a default configuration set.
+!env for declaring a environmental configuration set.
+!required for declaring variables in your !default configuration set than are required to be set in your !env tags.
+
 
 Helper methods have been written to allow for encryption and decryption of the config file.
 There are also helper methods to load this config file into django along with any passwords to unlock them and use the secrets directly without having to redeclare them.
@@ -97,8 +104,6 @@ from django.conf import settings
 settings.API_KEY_SECRET
 
 ```
-
-
 
 
 
@@ -191,19 +196,12 @@ version: 1.0
 ```
 
 
-`$ django-decrypt-config -e development`
+
+`$ eyaml encrypt development -c config.yml`
 this will ask for a password to decrypt development environment, and a password for decrypting the default config
 If your default config does not contain any secrets, it will not need to be decrypted so only the specified envrionment will need its password
 
 You can provide the following cli args to simplify things for the decrypt and encrypt commands
 
---dp, --default-password "password" (pulls the password from the cl)
---dpf, --default-password-file ./path/to/password_in_plain_text (pulls the password from a plaintext file)
---dpv, --default-password-var DEFAULT_PASSWORD_ENVIRONMENT_VAR_NAME (pulls the secrets from an env var)
-
--e, --env "development"
---ep, --environment-password "password" (pulls the password from the cl)
---epf, --environment-password-file ./path/to/password_in_plain_text (pulls the password from a plaintext file)
---epv, --environment-password-var DEVLOPMENT_PASSWORD_ENVIRONMENT_VAR_NAME (pulls the secrets from an env var)
-
-
+`$ eyaml decrypt ./path/to/config.yml environment_name -p P@ssw0rd`
+`$ eyaml decrypt ./path/to/config.yml environment_name -p P@ssw0rd`

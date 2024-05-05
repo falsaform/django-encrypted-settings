@@ -36,10 +36,10 @@ black *args:
     just poetry run black .
 
 encrypt *args:
-    just bash eyaml encrypt {{ args }}
+    docker compose exec development eyaml encrypt {{ args }}
 
 decrypt *args:
-    just bash eyaml decrypt {{ args }}
+    docker compose exec development eyaml decrypt {{ args }}
 
 dump *args:
-    just bash eyaml dump {{ args }}
+    docker compose exec development eyaml dump {{ args }}
