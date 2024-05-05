@@ -2,11 +2,11 @@
 #   [2024] Dan Brosnan dpjbrosnan@gmail.com     #
 #################################################
 
-from __future__ import (absolute_import, division, print_function)
+from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
     vars: encrypted_config_vars
     version_added: "2.10"
     short_description: Load custom host vars from encrypted config file
@@ -22,7 +22,7 @@ DOCUMENTATION = '''
             section: encrypted_django_settings
     extends_documentation_fragment:
       - vars_plugin_staging
-'''
+"""
 
 import os
 import argparse
@@ -50,22 +50,22 @@ class VarsModule(BaseVarsPlugin):
 
     def load_found_files(self, loader, data, found_files):
         for found in found_files:
-            new_data = loader.load_from_file(found, cache='all', unsafe=True)
+            new_data = loader.load_from_file(found, cache="all", unsafe=True)
             if new_data:  # ignore empty files
                 data = combine_vars(data, new_data)
         return data
 
     def parse_args(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('playbook')  # positional argument
-        parser.add_argument('-i', '--inventory')  # option that takes a value
-        parser.add_argument('-l', '--limit')
-        parser.add_argument('--vault-password-file', action='append', nargs='+')
+        parser.add_argument("playbook")  # positional argument
+        parser.add_argument("-i", "--inventory")  # option that takes a value
+        parser.add_argument("-l", "--limit")
+        parser.add_argument("--vault-password-file", action="append", nargs="+")
         args, unknown = parser.parse_known_args()
         return args
 
     def get_vars(self, loader, path, entities, cache=True):
-        ''' parses the inventory file '''
+        """parses the inventory file"""
 
         if not isinstance(entities, list):
             entities = [entities]
@@ -88,18 +88,22 @@ class VarsModule(BaseVarsPlugin):
             try:
                 entity_name = entity.name
             except AttributeError:
-                raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
+                raise AnsibleParserError(
+                    "Supplied entity must be Host or Group, got %s instead"
+                    % (type(entity))
+                )
 
             try:
                 first_char = entity_name[0]
             except (TypeError, IndexError, KeyError):
-                raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
+                raise AnsibleParserError(
+                    "Supplied entity must be Host or Group, got %s instead"
+                    % (type(entity))
+                )
 
         vault_password_files = flatten_list(args.vault_password_file)
         data = load_settings_from_config(
-            full_config_file_path,
-            args.limit,
-            password_files=vault_password_files
+            full_config_file_path, args.limit, password_files=vault_password_files
         )
 
         breakpoint()

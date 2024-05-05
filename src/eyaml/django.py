@@ -4,11 +4,11 @@ from eyaml.processor import SecretYAML
 
 
 def load_settings_from_config(
-        config_file_path: str,
-        environment: str,
-        passwords: List = None,
-        password_files: List = None
-    ):
+    config_file_path: str,
+    environment: str,
+    passwords: List = None,
+    password_files: List = None,
+):
     if not os.path.isfile(config_file_path):
         raise FileNotFoundError(f"{config_file_path} found not be found")
 
@@ -31,7 +31,7 @@ def load_settings_from_config(
             for password_file in password_files:
                 if not os.path.isfile(password_file):
                     raise FileNotFoundError(f"{password_file} found not be found")
-                password = open(password_file, 'r').read()
+                password = open(password_file, "r").read()
                 config.decrypt_default(password, raise_exception=False)
 
     if config.is_env_encrypted(environment):
@@ -46,7 +46,7 @@ def load_settings_from_config(
             for password_file in password_files:
                 if not os.path.isfile(password_file):
                     raise FileNotFoundError(f"{password_file} found not be found")
-                password = open(password_file, 'r').read()
+                password = open(password_file, "r").read()
                 config.decrypt_env(environment, password, raise_exception=False)
 
     return config.get_env_as_dict(environment)

@@ -1,4 +1,3 @@
-
 class OtherScalar:
     style = None
     tag = None
@@ -11,7 +10,9 @@ class OtherScalar:
 
     @classmethod
     def to_yaml(cls, dumper, data):
-        return dumper.represent_scalar('tag:yaml.org,2002:str', data.value, style=data.style)  # Represent as lowercase in YAML
+        return dumper.represent_scalar(
+            "tag:yaml.org,2002:str", data.value, style=data.style
+        )  # Represent as lowercase in YAML
 
     @classmethod
     def from_yaml(cls, constructor, node):
@@ -24,7 +25,6 @@ class OtherScalar:
 
     def __repr__(self):
         return str(self.value)
-
 
 
 class DefaultSecretConfigMap:
@@ -128,6 +128,7 @@ class RequiredString:
     def __init__(self, value, style=None):
         self.value = value
         self.style = style
+
     @classmethod
     def to_yaml(cls, representer, node):
         return representer.represent_scalar(cls.yaml_tag, node.value, style=node.style)
@@ -136,4 +137,3 @@ class RequiredString:
     def from_yaml(cls, constructor, node):
         loader = constructor.loader
         return cls(node.value)
-

@@ -8,6 +8,7 @@ from ruamel.yaml.scanner import ScannerError
 from eyaml.processor import SecretYAML
 from eyaml.exceptions import *
 
+
 def path_from_fixtures(file_name):
     return os.path.join(os.path.dirname(__file__), file_name)
 
@@ -27,8 +28,12 @@ TEST_YAML_10_PATH = path_from_fixtures("fixtures/basic/test_10.yml")
 TEST_YAML_11_PATH = path_from_fixtures("fixtures/basic/test_11.yml")
 TEST_YAML_12_PATH = path_from_fixtures("fixtures/basic/test_12.yml")
 
-ENCRYPTED_TEST_YAML_1_PATH = path_from_fixtures("fixtures/encrypted/encrypted_test_1.yml")
-ENCRYPTED_TEST_YAML_2_PATH = path_from_fixtures("fixtures/encrypted/encrypted_test_2.yml")
+ENCRYPTED_TEST_YAML_1_PATH = path_from_fixtures(
+    "fixtures/encrypted/encrypted_test_1.yml"
+)
+ENCRYPTED_TEST_YAML_2_PATH = path_from_fixtures(
+    "fixtures/encrypted/encrypted_test_2.yml"
+)
 INVALID_YML_TEST_1 = path_from_fixtures("fixtures/basic/invalid_yml_test_1.yml")
 INVALID_YML_TEST_2 = path_from_fixtures("fixtures/basic/invalid_yml_test_2.yml")
 
@@ -358,7 +363,9 @@ def test_round_trip_preserve_style():
 
 def test_decrypt_and_compare_expected_dict_output():
     config = SecretYAML(filepath=TEST_YAML_11_PATH)
-    tmp_file = tempfile.NamedTemporaryFile(prefix="temp-double-quoted-decrypted", suffix=".yml")
+    tmp_file = tempfile.NamedTemporaryFile(
+        prefix="temp-double-quoted-decrypted", suffix=".yml"
+    )
     tmp_location = tmp_file.name
     assert config.is_default_encrypted()
     config.decrypt_default("PASSWORD")
@@ -366,41 +373,55 @@ def test_decrypt_and_compare_expected_dict_output():
     config.save_file(tmp_location)
     config_as_dict = config.to_dict()
 
-    expected_dict = {'version': 1.0,
-                     'common': {'double_quoted_secret_value': 'value1', 'single_quoted_secret_value': 'value2',
-                                'secret_value': 'value3', 'double_quoted_value': 'value1',
-                                'single_quoted_value': 'value2', 'value': 'value3',
-                                'list_with_secrets': ['value1', 'value2', 'value3'],
-                                'mapping_with_secrets': {'double_quoted_secret_value': 'value1',
-                                                         'single_quoted_secret_value': 'value2',
-                                                         'secret_value': 'value3', 'double_quoted_value': 'value1',
-                                                         'single_quoted_value': 'value2', 'value': 'value3'}},
-                     'dev': {'ENV': 'dev', 'ENVIRONMENT': 'development'}}
+    expected_dict = {
+        "version": 1.0,
+        "common": {
+            "double_quoted_secret_value": "value1",
+            "single_quoted_secret_value": "value2",
+            "secret_value": "value3",
+            "double_quoted_value": "value1",
+            "single_quoted_value": "value2",
+            "value": "value3",
+            "list_with_secrets": ["value1", "value2", "value3"],
+            "mapping_with_secrets": {
+                "double_quoted_secret_value": "value1",
+                "single_quoted_secret_value": "value2",
+                "secret_value": "value3",
+                "double_quoted_value": "value1",
+                "single_quoted_value": "value2",
+                "value": "value3",
+            },
+        },
+        "dev": {"ENV": "dev", "ENVIRONMENT": "development"},
+    }
     assert config_as_dict == expected_dict
 
 
 def test_various_type_roundtrip():
     config = SecretYAML(filepath=TEST_YAML_12_PATH)
     default_config_dict = config.get_default_as_dict()
-    expected_default_config_dict = {'TEST': 'TEST_VALUE',
-                           'value_1': 'value_1',
-                           'value_10': -1,
-                           'value_11': -0.5,
-                           'value_12': -1000,
-                           'value_13': '$TEST',
-                           'value_14': '$TEST',
-                           'value_15': ' test value with spaces ',
-                           'value_16': '90d_soindas*()+=[];],/?\\|0ds0m9)!JW)(NSCN()MSC!_X)%#$!.',
-                           'value_2': 'value_2',
-                           'value_3': 'value_3',
-                           'value_4': True,
-                           'value_5': False,
-                           'value_6': True,
-                           'value_7': False,
-                           'value_8': 5,
-                           'value_9': 6.5}
+    expected_default_config_dict = {
+        "TEST": "TEST_VALUE",
+        "value_1": "value_1",
+        "value_10": -1,
+        "value_11": -0.5,
+        "value_12": -1000,
+        "value_13": "$TEST",
+        "value_14": "$TEST",
+        "value_15": " test value with spaces ",
+        "value_16": "90d_soindas*()+=[];],/?\\|0ds0m9)!JW)(NSCN()MSC!_X)%#$!.",
+        "value_2": "value_2",
+        "value_3": "value_3",
+        "value_4": True,
+        "value_5": False,
+        "value_6": True,
+        "value_7": False,
+        "value_8": 5,
+        "value_9": 6.5,
+    }
 
     assert default_config_dict == expected_default_config_dict
+
 
 # def test_envrion():
 #     config = SecretYAML(filepath=TEST_YAML_12_PATH)

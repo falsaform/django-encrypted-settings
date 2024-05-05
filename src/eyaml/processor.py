@@ -25,7 +25,7 @@ from .tags import (
     EncryptedString,
     SecretString,
     RequiredString,
-    OtherScalar
+    OtherScalar,
 )
 from .constants import CONTAINS_ENCRYPTED_TAGS, CONTAINS_UNENCRYPTED_TAGS
 from .utils import deep_update, encrypt_value, decrypt_value
@@ -62,7 +62,9 @@ def scalar_constructor(loader, node):
 
 def scalar_representer(dumper, data):
     if isinstance(data, StyledScalar):
-        return dumper.represent_scalar('tag:yaml.org,2002:str', data.value, style=data.style)
+        return dumper.represent_scalar(
+            "tag:yaml.org,2002:str", data.value, style=data.style
+        )
 
 
 logger = logging.getLogger("eyaml")
@@ -83,7 +85,7 @@ class SecretYAML(ruml.YAML):
         self.register_class(SecretString)
         self.register_class(RequiredString)
         self.register_class(OtherScalar)
-        self.constructor.add_constructor('tag:yaml.org,2002:str', scalar_constructor)
+        self.constructor.add_constructor("tag:yaml.org,2002:str", scalar_constructor)
         self.representer.add_representer(StyledScalar, scalar_representer)
 
         self.default_flow_style = True
@@ -202,14 +204,20 @@ class SecretYAML(ruml.YAML):
 
     def decrypt_walk(self, node, password, raise_exception=True):
         if isinstance(node, EncryptedString):
-            decrypted_string = decrypt_value(node.value, password, node, raise_exception=raise_exception)
+            decrypted_string = decrypt_value(
+                node.value, password, node, raise_exception=raise_exception
+            )
             node = SecretString(decrypted_string, style=node.style)
         elif isinstance(node, dict):
             for k, v in node.items():
-                node[k] = self.decrypt_walk(v, password, raise_exception=raise_exception)
+                node[k] = self.decrypt_walk(
+                    v, password, raise_exception=raise_exception
+                )
         elif isinstance(node, list):
             for idx, item in enumerate(node):
-                node[idx] = self.decrypt_walk(item, password, raise_exception=raise_exception)
+                node[idx] = self.decrypt_walk(
+                    item, password, raise_exception=raise_exception
+                )
         return node
 
     def load_file(self, filepath):
@@ -267,7 +275,7 @@ class SecretYAML(ruml.YAML):
         return mapping_by_str[name]
 
     def env(self, env_name):
-        if env_name == 'default':
+        if env_name == "default":
             return self.get_default()
         return self.get_env_by_name(env_name)
 

@@ -1,6 +1,7 @@
 from environ import Env
 from django.conf import settings
 
+
 def generate_dynamic_environ(config):
     env = Env()
     env.read_env()
