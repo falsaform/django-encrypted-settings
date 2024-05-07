@@ -9,40 +9,28 @@ and passed through to your application.
 Typically in a container based deployment any secrets would be passed in as an environment variables. 
 This becomes hard to manage and tedious as your project grows.
 
-Solutions like mozilla sops are great, but arent very git or DX friendly, you have no ability to defined multiple environments
-and you are also required to right logic in your application to capture these environment variables.
+Solutions like mozilla sops are great, but arent very git or DX friendly, you have no ability to define multiple environments
+and you are also required to write logic in your application to capture these environment variables.
 
 In my current job we store the secrets and configuration options in an ansible vault, one per host/group or environment 
-We gather our application settings and secrets from ansible, decrypted any vault secrets and pass them into the container
+We gather our application settings and secrets from ansible, decrypt any vault secrets and pass them into the container
 at run time as environment variables. 
 
 For each setting or secret an environment variable input needs to be declared inside the application.
 
-
-Lets say you need to debug an issue with production:
-
-You can look at logs for production, exec into the running container and debug from there, 
-or download and run the production container, but if the secrets have changed in your source of truth,
-production is not replicable, nor can rollbacks to previous deployments or containers be relied upon.
-
-
-We have to declare the variables in a django settings partials and use django-environs to pull these variables in.
-
 This package aims to solve the problems across all environments in a DX friendly, secure and CICD friendly way.
 
-Configuration is done in a single file, A yml file which is split into environments (envs) and a set of defaults.
-Secrets are encrypted per environment, each with their own password. The default set of configuration can also be 
+Configuration is done in a single file, A yml file which is split into environments (!env's) and a set of defaults(!default).
+Secrets are encrypted per environment, each with their own password. The default configuration set can also be 
 encrypted if there are shared default secrets.
 
 
 
 ### Base EYAML config
-A default configuration set must be defined which allows for project specific configuration to be defined, environmental 
+A !default tag set must be defined which allows for project specific configuration to be defined, environmental 
 settings override the default configuration and are merged on top.
 
-The default environment can also be encrypted, if required.
-
-Encrypted variables in the the default configuration or environment are stored inline using a custom set of tags and encrypted using ansible vault.
+Encrypted variables in the the default configuration or environment are stored inline using a custom set of tags and encrypted using ansible vault (by default, fernet and another encryption options TBD).
 
 !secret for an unencrypted secret.
 !encrypted for encrypted version of the !secret tag.
@@ -67,59 +55,21 @@ version: 1.0
     environment: "development"
     env: "dev"    
 ```
-
-version
-!default
-and !env
-
-This file cannot be encrypted as it does not define any secrets
+    This file cannot be encrypted as it does not define any secrets
 
 
-
-The settings defined can be utilized in django via a helper function to allow for environment specific overrides of configuration
-
-
-Any variables which are all uppercase automatically declare a django-environ entry,
-allowing the value to be overriden via a environment varaible if declared, otherwise defaulting to the value declared in the config for the selected environment.
-
-For example
-
-```
-version: 1.0
-!default all:
-    foo: "bar"
-!env development:
-    environment: "development"
-    env: "dev"
-    API_KEY_ID: 12ens01sns0-1
-    API_KEY_SECRET: !secret    
-```
-
-./manage.py 
-
-
-```
-from django.conf import settings
-
-settings.API_KEY_SECRET
-
-```
-
+### version
+The only version supported is currently 1.0, as new breaking changes are introduced we will release changelogs with new features avaible at different version.
 
 
 ### Custom tags
-
-### !version
-The only version supported is currently 1.0, as new breaking changes are introduced we will release changelogs with new features avaible at different version.
 
 ### !default
 The !default tag allows for a common default configuration across all environment, usefull for settings things like app_name or GA keys which wont change across environments. The !default tag can be named anything, typically all or common makes sense.
 Only 1 !default tag can be declared.
 
 ### !env
-The !env tag allows for environment specific configuration to be specified. When decrypting and accessing your envrionmental config you will use the name defined here. Optionally you can choose to include the default options as well, it is on by default.
-
-
+The !env tag allows for environment specific configuration to be specified. When decrypting and accessing your envrionmental config you will use the name defined here.
 
 
 ## Encryption !secret and !encrypted tags
@@ -195,13 +145,15 @@ version: 1.0
 
 ```
 
-
-
-`$ eyaml encrypt development -c config.yml`
-this will ask for a password to decrypt development environment, and a password for decrypting the default config
-If your default config does not contain any secrets, it will not need to be decrypted so only the specified envrionment will need its password
-
 You can provide the following cli args to simplify things for the decrypt and encrypt commands
 
-`$ eyaml decrypt ./path/to/config.yml environment_name -p P@ssw0rd`
-`$ eyaml decrypt ./path/to/config.yml environment_name -p P@ssw0rd`
+`$ eyaml encrypt ./path/to/config.yml development -p P@ssw0rd`
+`$ eyaml decrypt ./path/to/config.yml development -p P@ssw0rd`
+
+`$ eyaml encrypt ./path/to/config.yml environment_name --password-file=./path/to/password_file`
+`$ eyaml decrypt ./path/to/config.yml environment_name --password-file=./path/to/password_file`
+
+
+This package also comes with an ansible-vars plugin which allows you to use this file to specify your ansible host/group vars using this format
+TODO: update docs on how to use ansible-vars plugin
+

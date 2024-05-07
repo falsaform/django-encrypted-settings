@@ -106,5 +106,4 @@ class VarsModule(BaseVarsPlugin):
             full_config_file_path, args.limit, password_files=vault_password_files
         )
 
-        breakpoint()
         return data

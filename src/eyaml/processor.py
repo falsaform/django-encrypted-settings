@@ -6,6 +6,7 @@ import pprint
 import ruamel.yaml as ruml
 from ruamel.yaml import CommentedMap, CommentedSeq
 from ruamel.yaml.scalarfloat import ScalarFloat
+from ruamel.yaml.nodes import ScalarNode
 
 from .environ_helper import generate_dynamic_environ
 from .exceptions import (
@@ -28,51 +29,16 @@ from .tags import (
     SecretString,
     RequiredString,
     OtherScalar,
+    StyledScalar, scalar_representer, scalar_constructor
 )
 
 
 from .constants import CONTAINS_ENCRYPTED_TAGS, CONTAINS_UNENCRYPTED_TAGS, VALID_ENCRYPTION_METHODS, ANSIBLE_VAULT_ENCRYPTION_METHOD
 from .utils import deep_update, encrypt_value, decrypt_value
 
-from ruamel.yaml.nodes import ScalarNode
-
-
-class StyledScalar:
-    def __init__(self, value, style):
-        self.value = value
-        self.style = style
-
-    def __hash__(self):
-        return hash((self.value, self.style))
-
-    def __eq__(self, other):
-        if isinstance(other, StyledScalar):
-            return self.value == other.value and self.style == other.style
-        return False
-
-    def __repr__(self):
-        return str(self.value)
-
-    def __str__(self):
-        return str(self.value)
-
-
-def scalar_constructor(loader, node):
-    assert isinstance(node, ScalarNode)
-    style = node.style  # None (plain), ' (single-quoted), or " (double-quoted)
-    value = loader.construct_scalar(node)
-    return StyledScalar(value, style)
-
-
-def scalar_representer(dumper, data):
-    if isinstance(data, StyledScalar):
-        return dumper.represent_scalar(
-            "tag:yaml.org,2002:str", data.value, style=data.style
-        )
 
 
 logger = logging.getLogger("eyaml")
-
 
 class SecretYAML(ruml.YAML):
     def __init__(self, *args, filepath=None, **kwargs):
@@ -103,6 +69,7 @@ class SecretYAML(ruml.YAML):
             self.data = self.load_file(self.filepath)
         if self.data:
             self.validate()
+            self.data = self._set_parent_walk(self.data, parent_name='__root__')
 
     @classmethod
     def get_tags_of_type(cls, node, of_type, depth=0):
@@ -233,6 +200,56 @@ class SecretYAML(ruml.YAML):
                     item, password, raise_exception=raise_exception
                 )
         return node
+
+    def _set_parent_walk(self, node, parent=None, parent_name=None):
+        if isinstance(node, EncryptedString):
+            node.parent = parent
+            node.parent_name = parent_name
+            return node
+        if isinstance(node, CommentedMap):
+            for k, v in node.items():
+                try:
+                    node[k].parent = parent
+                    node[k].parent_name = parent_name
+                except:
+                    pass
+                node[k] = self._set_parent_walk(v, parent=node, parent_name=str(k))
+            node.parent = parent
+            node.parent_name = parent_name
+            return node
+        elif isinstance(node, CommentedSeq):
+            for idx, item in enumerate(node):
+                node[idx].parent = parent
+                node[idx].parent_name = parent_name
+                node[idx] = self._set_parent_walk(item, parent=node, parent_name=parent_name)
+            node.parent = parent
+            node.parent_name = parent_name
+            return node
+        elif isinstance(node, ScalarFloat):
+            return node
+        elif isinstance(node, ScalarNode):
+            node.parent = parent
+            node.parent_name = parent_name
+            return node
+        elif isinstance(node, StyledScalar):
+            node.parent = parent
+            node.parent_name = parent_name
+            return node
+        elif isinstance(node, SecretString):
+            node.parent = parent
+            node.parent_name = parent_name
+            return node
+        elif isinstance(node, EncryptedString):
+            node.parent = parent
+            node.parent_name = parent_name
+            return node
+        elif isinstance(node, int):
+            return node
+
+        node.parent = parent
+        node.parent_name = parent_name
+        return node
+
 
     def load_file(self, filepath):
         if not os.path.isfile(filepath):

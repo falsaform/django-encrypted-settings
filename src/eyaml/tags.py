@@ -1,7 +1,12 @@
+from ruamel.yaml.nodes import ScalarNode
+
+
 class OtherScalar:
     style = None
     tag = None
     value = None
+    parent = None
+    parent_name = None
 
     def __init__(self, tag, value, style=None):
         self.tag = tag
@@ -29,6 +34,8 @@ class OtherScalar:
 
 class DefaultSecretConfigMap:
     yaml_tag = "!default"
+    parent = None
+    parent_name = None
 
     def __init__(self, tag, value):
         self.tag = tag
@@ -52,6 +59,8 @@ class DefaultSecretConfigMap:
 class EnvSecretConfigMap:
     yaml_tag = "!env"
     style = None
+    parent = None
+    parent_name = None
 
     def __init__(self, tag, value, style=None):
         self.tag = tag
@@ -77,6 +86,8 @@ class SecretString:
     yaml_tag = "!secret"
     alias_key = None
     style = None
+    parent = None
+    parent_name = None
 
     def __init__(self, value, style=None):
         self.value = value
@@ -100,6 +111,8 @@ class SecretString:
 class EncryptedString:
     yaml_tag = "!encrypted"
     style = None
+    parent = None
+    parent_name = None
 
     def __init__(self, value, style=None):
         self.value = value
@@ -124,6 +137,8 @@ class EncryptedString:
 class RequiredString:
     yaml_tag = "!required"
     style = None
+    parent = None
+    parent_name = None
 
     def __init__(self, value, style=None):
         self.value = value
@@ -137,3 +152,40 @@ class RequiredString:
     def from_yaml(cls, constructor, node):
         loader = constructor.loader
         return cls(node.value)
+
+
+class StyledScalar:
+    parent = None
+    parent_name = None
+
+    def __init__(self, value, style):
+        self.value = value
+        self.style = style
+
+    def __hash__(self):
+        return hash((self.value, self.style))
+
+    def __eq__(self, other):
+        if isinstance(other, StyledScalar):
+            return self.value == other.value and self.style == other.style
+        return False
+
+    def __repr__(self):
+        return str(self.value)
+
+    def __str__(self):
+        return str(self.value)
+
+
+def scalar_constructor(loader, node):
+    assert isinstance(node, ScalarNode)
+    style = node.style  # None (plain), ' (single-quoted), or " (double-quoted)
+    value = loader.construct_scalar(node)
+    return StyledScalar(value, style)
+
+
+def scalar_representer(dumper, data):
+    if isinstance(data, StyledScalar):
+        return dumper.represent_scalar(
+            "tag:yaml.org,2002:str", data.value, style=data.style
+        )
